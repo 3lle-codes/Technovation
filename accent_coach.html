@@ -317,7 +317,8 @@
         scr = "ob",
         ob = 0,
         P = null,
-        lo = 0;
+        lo = 0,
+        obError = "";
       try {
         S = JSON.parse(localStorage.getItem(K)) || {};
       } catch (e) {}
@@ -593,6 +594,7 @@
           i < 0 ? S[k].push(v) : S[k].splice(i, 1);
         } else S[k] = v;
         if (k === "months") S.why = v ? "deadline" : "fun";
+        obError = "";
         save();
         draw();
       }
@@ -897,18 +899,24 @@
         draw();
       }
       function nx() {
-        if (ob === 0) {
-          const v = $("#nm").value.trim();
-          if (!v) {
-            $("#nm").focus();
-            return;
-          }
-          S.name = v;
+        const valid = [
+          () => $("#nm").value.trim().length > 0,
+          () => S.perWeek != null,
+          () => S.why != null && (S.why !== "deadline" || S.months != null),
+          () => Array.isArray(S.scn) && S.scn.length > 0,
+          () => Array.isArray(S.langs) && S.langs.length > 0,
+          () => S.accent != null,
+        ][ob]();
+        if (!valid) {
+          obError = "Please answer this question before continuing.";
+          draw();
+          if (ob === 0) $("#nm").focus();
+          return;
         }
-        if (ob === 1 && !S.perWeek) S.perWeek = 3;
-        if (ob === 2 && !S.why) S.why = "fun";
-        if (ob === 2 && S.why === "deadline" && !S.months) S.months = 3;
-        if (ob === 5 && !S.accent) S.accent = "Not sure yet";
+        obError = "";
+        if (ob === 0) {
+          S.name = $("#nm").value.trim();
+        }
         save();
         if (ob < 5) {
           ob++;
@@ -1032,7 +1040,7 @@
           .join("")}</nav>`;
       const V = {
         ob: () =>
-          `<div class="bar"><i style="width:${((ob + 1) / 6) * 100}%"></i></div><p class="m">Question ${ob + 1} of 6</p>${OB[ob]()}<div class="row2" style="margin-top:18px">${ob ? '<button class="btn ghost" onclick="ob--;draw()">Back</button>' : ""}<button class="btn" onclick="nx()">${ob === 5 ? "Finish" : "Continue"}</button></div>`,
+          `<div class="bar"><i style="width:${((ob + 1) / 6) * 100}%"></i></div><p class="m">Question ${ob + 1} of 6</p>${OB[ob]()}${obError ? `<p class="m" role="alert">${esc(obError)}</p>` : ""}<div class="row2" style="margin-top:18px">${ob ? '<button class="btn ghost" onclick="ob--;obError=\'\';draw()">Back</button>' : ""}<button class="btn" onclick="nx()">${ob === 5 ? "Finish" : "Continue"}</button></div>`,
         dg: () => `<h1>Let’s find your starting point</h1><p class="m">Takes about two minutes. We’ll compare it to your first recordings later.</p>
 <button class="card scn" onclick="startPractice(diagWords(),'diag')"><span><b>Say the words I hear</b><br><span class="m">Five words picked from your languages</span></span></button>
 <button class="card scn" onclick="go('dp')"><span><b>Pick sounds I find hard</b><br><span class="m">Faster, no microphone needed</span></span></button>
