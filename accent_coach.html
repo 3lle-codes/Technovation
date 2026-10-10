@@ -1,156 +1,1161 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lilt</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#f4f2ff;--ink:#241247;--mut:#6b5f8f;--card:#fff;--line:#ddd7f5;--acc:#e0237f;--on:#fff;--ok:#0f9d8c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#150f30;--ink:#f1edff;--mut:#a89dd2;--card:#22194a;--line:#3a2f6b;--acc:#ff5fa8;--on:#1a0f30;--ok:#3fd3c0}}
-:root[data-theme="dark"]{--bg:#150f30;--ink:#f1edff;--mut:#a89dd2;--card:#22194a;--line:#3a2f6b;--acc:#ff5fa8;--on:#1a0f30;--ok:#3fd3c0}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-*,*:before,*:after{box-sizing:inherit}
-html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:400 16px/1.5 'DM Sans',system-ui,sans-serif}
-h1,h2,h3,.big{font-family:'Bricolage Grotesque','DM Sans',sans-serif;margin:0;line-height:1.1;font-weight:800}
-h1{font-size:30px;margin:8px 0 10px}h3{font-size:19px;margin-bottom:8px}
-#app{max-width:440px;margin:0 auto;padding:16px 18px 100px}
-.m{color:var(--mut)}.c{text-align:center}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0}
-.btn{display:block;width:100%;background:var(--acc);color:var(--on);border:0;border-radius:14px;padding:14px 18px;font:600 16px 'DM Sans',sans-serif;cursor:pointer;margin:10px 0}
-.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
-.chip{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:9px 15px;margin:0 6px 8px 0;font:inherit;cursor:pointer}
-.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.in{width:100%;font:inherit;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
-.bar{height:10px;border-radius:9px;background:var(--line);overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--acc);border-radius:9px}
-.row,.row2{display:flex;align-items:center;gap:10px;justify-content:space-between}.row2>*{flex:1}
-.lnk{background:none;border:0;color:var(--mut);font:inherit;cursor:pointer;padding:6px 0}
-.big{font-size:58px;letter-spacing:-1px}.st{font-size:56px}
-.dot{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);margin-right:4px;font-size:13px;font-weight:600}.dot.on{background:var(--ok);border-color:var(--ok);color:#fff}
-.scn{display:flex;justify-content:space-between;width:100%;text-align:left;color:var(--ink);font:inherit;cursor:pointer}
-.live{animation:pl 1s infinite}@keyframes pl{50%{opacity:.6}}
-audio{width:100%;margin-top:6px}
-nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-nav button{flex:1;padding:15px 0;background:none;border:0;font:600 15px 'DM Sans',sans-serif;color:var(--mut);cursor:pointer}nav .on{color:var(--acc)}
-button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-.sp{--p:#ff5fa8;--t:#3fd3c0;position:fixed;inset:0;z-index:9;background:#241247;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;transition:opacity .5s}.sp.out{opacity:0}
-.sp h1{font-size:92px;color:#fff;letter-spacing:-4px;margin:0}.sp p{color:#cfc4ff;margin:0}
-.wave{display:flex;gap:5px;align-items:center;height:140px}.wave i{width:7px;height:100%;border-radius:6px;transform:scaleY(.12);animation:w 1.3s ease-in-out infinite}
-@keyframes w{50%{transform:scaleY(var(--a))}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.wave i{transform:scaleY(var(--a))}}
-</style></head><body>
-<div id="sp" class="sp"></div><div id="app"></div>
-<script>
-const $=s=>document.querySelector(s),K='lilt_v1',R='lilt_rec';
-let S={},RC={},scr='ob',ob=0,P=null,lo=0;
-try{S=JSON.parse(localStorage.getItem(K))||{}}catch(e){}
-try{RC=JSON.parse(localStorage.getItem(R))||{}}catch(e){}
-const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}},saveRC=()=>{try{localStorage.setItem(R,JSON.stringify(RC))}catch(e){}};
-const esc=s=>String(s).replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
-const SC={j:'Job interview',t:'Teachers & educators',p:'Presentation',f:'Ordering food',g:'General / other',h:'Hard English words'};
-const SN={th:'th (think / sink)',rl:'r / l (rice / lice)',vw:'v / w (vest / west)',bv:'b / v (berry / very)',sc:'sh / ch (share / chair)',ie:'ship / sheep'};
-const TIP={th:'Slide the tip of your tongue between your teeth and push air out. For “s”, keep the tongue behind your teeth.',rl:'“r”: curl the tongue back and touch nothing. “l”: tap the tip right behind your top teeth.',vw:'“v”: top teeth rest on your bottom lip. “w”: round your lips, no teeth.',bv:'“b”: press both lips together, then pop. “v”: top teeth on bottom lip and keep buzzing.',sc:'“sh”: lips slightly rounded, air flows smoothly. “ch”: stop the air, then release it.',ie:'“ship”: short and relaxed. “sheep”: longer, with a smile.'};
-const LH={English:[],Spanish:['th','bv','sc','ie'],Mandarin:['rl','th','vw','ie'],Hindi:['vw','th','ie'],Arabic:['bv','ie','rl'],Portuguese:['th','rl','ie'],French:['th','rl','ie'],Japanese:['rl','th','bv','ie'],Korean:['rl','sc','th','ie'],Russian:['th','vw','ie'],Other:['th','rl']};
-const AC={American:'en-US',British:'en-GB',Australian:'en-AU',Canadian:'en-CA'};
-const W=[['rice','lice','rl','fg'],['right','light','rl','jpg'],['read','lead','rl','tg'],['think','sink','th','jpth'],['three','free','th','jpth'],['thank','sank','th','jpg'],['very','berry','bv','jpfg'],['vest','west','vw','gh'],['wine','vine','vw','f'],['ship','sheep','ie','ghth'],['live','leave','ie','jtg'],['chair','share','sc','tfg'],['chips','ships','sc','fh']];
-const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-const wkey=d=>{d=new Date(d);d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)};
-const weeks=()=>{const o={};(S.days||[]).forEach(x=>{const k=wkey(x+'T00:00');o[k]=(o[k]||0)+1});return o};
-const streak=o=>{const g=S.perWeek||3;let k=wkey(new Date()),n=(o[k]||0)>=g?1:0;for(;;){const d=new Date(k+'T00:00');d.setDate(d.getDate()-7);k=iso(d);if((o[k]||0)>=g)n++;else break}return n};
-const hard=()=>{const h=new Set();(S.langs||[]).forEach(l=>(LH[l]||[]).forEach(x=>h.add(x)));return h};
-const sc=k=>S.scores&&S.scores[k]!=null?S.scores[k]:(hard().has(k)?35:60);
-const overall=()=>{const v=Object.values(S.scores||{});return v.length?Math.round(v.reduce((a,b)=>a+b)/v.length):0};
-const recs=()=>{const sel=(S.scn&&S.scn.length)?S.scn:['g'];let p=W.filter(w=>sel.some(c=>w[3].includes(c)));if(p.length<5)p=W.slice();return p.sort((a,b)=>sc(a[2])-sc(b[2])).slice(0,5)};
-const diagWords=()=>{const ks=[...hard()];Object.keys(SN).forEach(k=>ks.includes(k)||ks.push(k));return ks.slice(0,5).map(k=>W.find(w=>w[2]===k))};
-const chips=(k,opts,m)=>opts.map(o=>{const v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o,on=m?(S[k]||[]).includes(v):S[k]===v,j=typeof v==='number'?v:`'${v}'`;return `<button class="chip${on?' on':''}" onclick="pick('${k}',${j},${m?1:0})">${l}</button>`}).join('');
-function pick(k,v,m){if(m){S[k]=S[k]||[];const i=S[k].indexOf(v);i<0?S[k].push(v):S[k].splice(i,1)}else S[k]=v;if(k==='months')S.why=v?'deadline':'fun';save();draw()}
-function say(w,r=.85){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(w);u.lang=AC[S.accent]||'en-US';u.rate=r;speechSynthesis.speak(u)}catch(e){}}
-const TG={th:[80,66],rl:[120,44],vw:[110,76],bv:[110,76],sc:[108,50],ie:[106,70]};
-const mouth=k=>{const[x,y]=TG[k];return `<svg viewBox="0 0 220 120" role="img" aria-label="Where your tongue goes" style="width:100%;max-height:130px"><rect x="20" y="14" width="190" height="92" rx="44" fill="none" stroke="var(--line)" stroke-width="3"/><rect x="26" y="34" width="14" height="22" rx="4" fill="var(--card)" stroke="var(--mut)"/><rect x="26" y="64" width="14" height="22" rx="4" fill="var(--card)" stroke="var(--mut)"/><ellipse cx="${x}" cy="${y}" rx="46" ry="14" fill="var(--acc)" opacity=".85"/><text x="${x}" y="${y+4}" font-size="11" fill="#fff" text-anchor="middle">tongue</text><text x="33" y="104" font-size="10" fill="var(--mut)" text-anchor="middle">teeth</text></svg>`};
-const go=s=>{scr=s;draw();scrollTo(0,0)};
-function startPractice(q,mode){P={q,i:0,mode,rec:0};go('pr')}
-const drill=w=>startPractice([W.find(x=>x[0]===w)],'practice');
-const scn=k=>startPractice(W.filter(w=>w[3].includes(k)).sort((a,b)=>sc(a[2])-sc(b[2])).slice(0,6),'practice');
-function resetW(){P.res=P.url=P.heard=P.self=P.noMic=null;P.chk=0;draw()}
-const again=resetW;
-function nextW(){if(P.i<P.q.length-1){P.i++;resetW()}else{if(P.mode==='diag'){S.diag=1;save()}go('home')}}
-async function rcStart(){
-  P.heard=null;
-  try{const st=await navigator.mediaDevices.getUserMedia({audio:true});P.ch=[];P.mr=new MediaRecorder(st);P.mr.ondataavailable=e=>P.ch.push(e.data);P.mr.onstop=()=>{st.getTracks().forEach(t=>t.stop());finish()};P.mr.start()}
-  catch(e){P.noMic=1;P.rec=0;draw();return}
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(SR){try{P.sr=new SR();P.sr.lang=AC[S.accent]||'en-US';P.sr.maxAlternatives=3;P.sr.onresult=e=>{P.heard=[...e.results[0]].map(a=>a.transcript.toLowerCase().trim())};P.sr.start()}catch(e){P.sr=null}}
-  P.rec=1;draw();
-}
-function rcStop(){P.rec=0;P.chk=1;try{P.sr&&P.sr.stop()}catch(e){}if(P.mr&&P.mr.state!=='inactive')P.mr.stop();draw()}
-function finish(){setTimeout(()=>{if(!P)return;const w=P.q[P.i],b=new Blob(P.ch,{type:P.mr.mimeType||'audio/webm'});P.url=URL.createObjectURL(b);
-  const fr=new FileReader();fr.onload=()=>{if(fr.result.length<4e5&&(RC[w[0]]||Object.keys(RC).length<8)){const o={d:fr.result,t:Date.now()};RC[w[0]]=RC[w[0]]||{};if(!RC[w[0]].first)RC[w[0]].first=o;RC[w[0]].last=o;saveRC()}};fr.readAsDataURL(b);
-  P.chk=0;judge();draw()},700)}
-function judge(){const w=P.q[P.i],h=P.heard;if(!h||!h.length){P.self=1;return}
-  if(h.some(x=>x.includes(w[0])))grade(92,`Clear. It came through as “${w[0]}”.`);
-  else if(h.some(x=>x.includes(w[1])))grade(35,`That sounded like “${w[1]}”. ${TIP[w[2]]}`);
-  else grade(55,`I heard “${esc(h[0])}”. Slow down and try again. ${TIP[w[2]]}`)}
-function grade(s,msg){const w=P.q[P.i],k=w[2];S.scores=S.scores||{};S.scores[k]=P.mode==='diag'?s:Math.round(sc(k)*.6+s*.4);
-  if(P.mode!=='diag'){const t=iso(new Date());S.done=S.done||{};S.done[t]=(S.done[t]||0)+1;S.days=S.days||[];if(S.done[t]>=3&&!S.days.includes(t))S.days.push(t)}
-  P.res={s,msg};save();draw()}
-function nx(){
-  if(ob===0){const v=$('#nm').value.trim();if(!v){$('#nm').focus();return}S.name=v}
-  if(ob===1&&!S.perWeek)S.perWeek=3;if(ob===2&&!S.why)S.why='fun';if(ob===2&&S.why==='deadline'&&!S.months)S.months=3;if(ob===5&&!S.accent)S.accent='Not sure yet';
-  save();if(ob<5){ob++;draw()}else{S.ready=1;S.start=Date.now();save();go('dg')}}
-function dpDone(){const ch=S.hp||[];S.scores={};Object.keys(SN).forEach(k=>S.scores[k]=ch.includes(k)?25:(hard().has(k)?45:65));S.diag=1;save();go('home')}
-function notif(on){S.notif=on;save();if(on&&window.Notification)try{Notification.requestPermission()}catch(e){}}
-function logout(){if(!lo){lo=1;draw();return}try{localStorage.removeItem(K);localStorage.removeItem(R)}catch(e){}S={};RC={};lo=0;ob=0;go('ob')}
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Lilt</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&family=DM+Sans:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f4f2ff;
+        --ink: #241247;
+        --mut: #6b5f8f;
+        --card: #fff;
+        --line: #ddd7f5;
+        --acc: #e0237f;
+        --on: #fff;
+        --ok: #0f9d8c;
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #150f30;
+          --ink: #f1edff;
+          --mut: #a89dd2;
+          --card: #22194a;
+          --line: #3a2f6b;
+          --acc: #ff5fa8;
+          --on: #1a0f30;
+          --ok: #3fd3c0;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #150f30;
+        --ink: #f1edff;
+        --mut: #a89dd2;
+        --card: #22194a;
+        --line: #3a2f6b;
+        --acc: #ff5fa8;
+        --on: #1a0f30;
+        --ok: #3fd3c0;
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          400 16px/1.5 "DM Sans",
+          system-ui,
+          sans-serif;
+      }
+      h1,
+      h2,
+      h3,
+      .big {
+        font-family: "Bricolage Grotesque", "DM Sans", sans-serif;
+        margin: 0;
+        line-height: 1.1;
+        font-weight: 800;
+      }
+      h1 {
+        font-size: 30px;
+        margin: 8px 0 10px;
+      }
+      h3 {
+        font-size: 19px;
+        margin-bottom: 8px;
+      }
+      #app {
+        max-width: 440px;
+        margin: 0 auto;
+        padding: 16px 18px 100px;
+      }
+      .m {
+        color: var(--mut);
+      }
+      .c {
+        text-align: center;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+        margin: 12px 0;
+      }
+      .btn {
+        display: block;
+        width: 100%;
+        background: var(--acc);
+        color: var(--on);
+        border: 0;
+        border-radius: 14px;
+        padding: 14px 18px;
+        font:
+          600 16px "DM Sans",
+          sans-serif;
+        cursor: pointer;
+        margin: 10px 0;
+      }
+      .btn.ghost {
+        background: transparent;
+        color: var(--ink);
+        border: 1.5px solid var(--line);
+      }
+      .chip {
+        border: 1.5px solid var(--line);
+        background: var(--card);
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 9px 15px;
+        margin: 0 6px 8px 0;
+        font: inherit;
+        cursor: pointer;
+      }
+      .chip.on {
+        background: var(--ink);
+        color: var(--bg);
+        border-color: var(--ink);
+      }
+      .in {
+        width: 100%;
+        font: inherit;
+        padding: 14px;
+        border-radius: 14px;
+        border: 1.5px solid var(--line);
+        background: var(--card);
+        color: var(--ink);
+      }
+      .bar {
+        height: 10px;
+        border-radius: 9px;
+        background: var(--line);
+        overflow: hidden;
+        margin: 6px 0;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        background: var(--acc);
+        border-radius: 9px;
+      }
+      .row,
+      .row2 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: space-between;
+      }
+      .row2 > * {
+        flex: 1;
+      }
+      .lnk {
+        background: none;
+        border: 0;
+        color: var(--mut);
+        font: inherit;
+        cursor: pointer;
+        padding: 6px 0;
+      }
+      .big {
+        font-size: 58px;
+        letter-spacing: -1px;
+      }
+      .st {
+        font-size: 56px;
+      }
+      .dot {
+        display: inline-grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 1.5px solid var(--line);
+        margin-right: 4px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .dot.on {
+        background: var(--ok);
+        border-color: var(--ok);
+        color: #fff;
+      }
+      .scn {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        text-align: left;
+        color: var(--ink);
+        font: inherit;
+        cursor: pointer;
+      }
+      .live {
+        animation: pl 1s infinite;
+      }
+      @keyframes pl {
+        50% {
+          opacity: 0.6;
+        }
+      }
+      audio {
+        width: 100%;
+        margin-top: 6px;
+      }
+      nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        background: var(--card);
+        border-top: 1px solid var(--line);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      nav button {
+        flex: 1;
+        padding: 15px 0;
+        background: none;
+        border: 0;
+        font:
+          600 15px "DM Sans",
+          sans-serif;
+        color: var(--mut);
+        cursor: pointer;
+      }
+      nav .on {
+        color: var(--acc);
+      }
+      button:focus-visible,
+      input:focus-visible {
+        outline: 3px solid var(--acc);
+        outline-offset: 2px;
+      }
+      .sp {
+        --p: #ff5fa8;
+        --t: #3fd3c0;
+        position: fixed;
+        inset: 0;
+        z-index: 9;
+        background: #241247;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        transition: opacity 0.5s;
+      }
+      .sp.out {
+        opacity: 0;
+      }
+      .sp h1 {
+        font-size: 92px;
+        color: #fff;
+        letter-spacing: -4px;
+        margin: 0;
+      }
+      .sp p {
+        color: #cfc4ff;
+        margin: 0;
+      }
+      .wave {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        height: 140px;
+      }
+      .wave i {
+        width: 7px;
+        height: 100%;
+        border-radius: 6px;
+        transform: scaleY(0.12);
+        animation: w 1.3s ease-in-out infinite;
+      }
+      @keyframes w {
+        50% {
+          transform: scaleY(var(--a));
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+          transition: none !important;
+        }
+        .wave i {
+          transform: scaleY(var(--a));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="sp" class="sp"></div>
+    <div id="app"></div>
+    <script>
+      const $ = (s) => document.querySelector(s),
+        K = "lilt_v1",
+        R = "lilt_rec";
+      let S = {},
+        RC = {},
+        scr = "ob",
+        ob = 0,
+        P = null,
+        lo = 0;
+      try {
+        S = JSON.parse(localStorage.getItem(K)) || {};
+      } catch (e) {}
+      try {
+        RC = JSON.parse(localStorage.getItem(R)) || {};
+      } catch (e) {}
+      let rcDBPromise = null,
+        rcStorageError = "",
+        rcSaveQueue = Promise.resolve();
+      const save = () => {
+        try {
+          localStorage.setItem(K, JSON.stringify(S));
+        } catch (e) {}
+      };
+      function openRCDB() {
+        if (!window.indexedDB)
+          return Promise.reject(
+            new Error("This browser does not support saved recordings."),
+          );
+        if (!rcDBPromise)
+          rcDBPromise = new Promise((resolve, reject) => {
+            const req = indexedDB.open("lilt_recordings", 1);
+            req.onupgradeneeded = () =>
+              req.result.createObjectStore("recordings", { keyPath: "word" });
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () =>
+              reject(
+                req.error || new Error("Could not open recording storage."),
+              );
+          });
+        return rcDBPromise;
+      }
+      const idbRequest = (req) =>
+        new Promise((resolve, reject) => {
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () =>
+            reject(req.error || new Error("Recording storage failed."));
+        });
+      const blobFromTake = async (take) =>
+        take?.blob || (take?.d ? await (await fetch(take.d)).blob() : null);
+      const takeUrl = (take) =>
+        take ? { d: URL.createObjectURL(take.blob), t: take.t } : null;
+      async function loadRecordings() {
+        try {
+          const db = await openRCDB(),
+            records = await idbRequest(
+              db.transaction("recordings").objectStore("recordings").getAll(),
+            );
+          const stored = new Set(records.map((r) => r.word));
+          records.forEach((r) => {
+            if ((RC[r.word]?.last?.t || 0) > r.last.t) return;
+            RC[r.word] = { first: takeUrl(r.first), last: takeUrl(r.last) };
+          });
+          for (const [word, legacy] of Object.entries(RC)) {
+            if (stored.has(word) || !legacy.first || !legacy.last) continue;
+            const first = {
+              blob: await blobFromTake(legacy.first),
+              t: legacy.first.t || Date.now(),
+            };
+            const last = {
+              blob: await blobFromTake(legacy.last),
+              t: legacy.last.t || first.t + 1,
+            };
+            const tx = db.transaction("recordings", "readwrite"),
+              done = new Promise((resolve, reject) => {
+                tx.oncomplete = resolve;
+                tx.onerror = () =>
+                  reject(
+                    tx.error ||
+                      new Error("Legacy recording could not be migrated."),
+                  );
+                tx.onabort = () =>
+                  reject(
+                    tx.error ||
+                      new Error("Legacy recording could not be migrated."),
+                  );
+              });
+            tx.objectStore("recordings").put({ word, first, last });
+            await done;
+            RC[word] = { first: takeUrl(first), last: takeUrl(last) };
+          }
+          if (scr === "pf") draw();
+        } catch (e) {
+          rcStorageError = e.message || "Saved recordings could not be loaded.";
+          if (scr === "pf") draw();
+        }
+      }
+      function saveRecording(word, blob) {
+        const job = () => persistRecording(word, blob),
+          pending = rcSaveQueue.then(job, job);
+        rcSaveQueue = pending.catch(() => {});
+        return pending;
+      }
+      async function persistRecording(word, blob) {
+        const db = await openRCDB(),
+          saved = await idbRequest(
+            db.transaction("recordings").objectStore("recordings").get(word),
+          ),
+          old = RC[word];
+        const timestamp = Math.max(
+          Date.now(),
+          (saved?.last?.t || old?.last?.t || 0) + 1,
+        );
+        const firstBlob =
+          saved?.first?.blob || (await blobFromTake(old?.first)) || blob;
+        const first = saved?.first || {
+          blob: firstBlob,
+          t: old?.first?.t || timestamp,
+        };
+        const record = { word, first, last: { blob, t: timestamp } };
+        const tx = db.transaction("recordings", "readwrite"),
+          done = new Promise((resolve, reject) => {
+            tx.oncomplete = resolve;
+            tx.onerror = () =>
+              reject(tx.error || new Error("Recording could not be saved."));
+            tx.onabort = () =>
+              reject(tx.error || new Error("Recording could not be saved."));
+          });
+        tx.objectStore("recordings").put(record);
+        await done;
+        const previousLast = old?.last?.d,
+          firstUrl = old?.first?.d || takeUrl(first).d,
+          lastUrl = URL.createObjectURL(blob);
+        RC[word] = {
+          first: { d: firstUrl, t: first.t },
+          last: { d: lastUrl, t: timestamp },
+        };
+        if (
+          previousLast &&
+          previousLast !== firstUrl &&
+          previousLast !== lastUrl
+        )
+          URL.revokeObjectURL(previousLast);
+        rcStorageError = "";
+      }
+      const releaseTakeUrl = (url) => {
+        if (
+          url &&
+          !Object.values(RC).some(
+            (r) => r.first?.d === url || r.last?.d === url,
+          )
+        )
+          URL.revokeObjectURL(url);
+      };
+      const esc = (s) =>
+        String(s).replace(/[&<>"]/g, (c) => "&#" + c.charCodeAt(0) + ";");
+      const SC = {
+        j: "Job interview",
+        t: "Teachers & educators",
+        p: "Presentation",
+        f: "Ordering food",
+        g: "General / other",
+        h: "Hard English words",
+      };
+      const SN = {
+        th: "th (think / sink)",
+        rl: "r / l (rice / lice)",
+        vw: "v / w (vest / west)",
+        bv: "b / v (berry / very)",
+        sc: "sh / ch (share / chair)",
+        ie: "ship / sheep",
+      };
+      const TIP = {
+        th: "Slide the tip of your tongue between your teeth and push air out. For “s”, keep the tongue behind your teeth.",
+        rl: "“r”: curl the tongue back and touch nothing. “l”: tap the tip right behind your top teeth.",
+        vw: "“v”: top teeth rest on your bottom lip. “w”: round your lips, no teeth.",
+        bv: "“b”: press both lips together, then pop. “v”: top teeth on bottom lip and keep buzzing.",
+        sc: "“sh”: lips slightly rounded, air flows smoothly. “ch”: stop the air, then release it.",
+        ie: "“ship”: short and relaxed. “sheep”: longer, with a smile.",
+      };
+      const LH = {
+        English: [],
+        Spanish: ["th", "bv", "sc", "ie"],
+        Mandarin: ["rl", "th", "vw", "ie"],
+        Hindi: ["vw", "th", "ie"],
+        Arabic: ["bv", "ie", "rl"],
+        Portuguese: ["th", "rl", "ie"],
+        French: ["th", "rl", "ie"],
+        Japanese: ["rl", "th", "bv", "ie"],
+        Korean: ["rl", "sc", "th", "ie"],
+        Russian: ["th", "vw", "ie"],
+        Other: ["th", "rl"],
+      };
+      const AC = {
+        American: "en-US",
+        British: "en-GB",
+        Australian: "en-AU",
+        Canadian: "en-CA",
+      };
+      const W = [
+        ["rice", "lice", "rl", "fg"],
+        ["right", "light", "rl", "jpg"],
+        ["read", "lead", "rl", "tg"],
+        ["think", "sink", "th", "jpth"],
+        ["three", "free", "th", "jpth"],
+        ["thank", "sank", "th", "jpg"],
+        ["very", "berry", "bv", "jpfg"],
+        ["vest", "west", "vw", "gh"],
+        ["wine", "vine", "vw", "f"],
+        ["ship", "sheep", "ie", "ghth"],
+        ["live", "leave", "ie", "jtg"],
+        ["chair", "share", "sc", "tfg"],
+        ["chips", "ships", "sc", "fh"],
+      ];
+      const iso = (d) =>
+        d.getFullYear() +
+        "-" +
+        String(d.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getDate()).padStart(2, "0");
+      const wkey = (d) => {
+        d = new Date(d);
+        d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+        return iso(d);
+      };
+      const weeks = () => {
+        const o = {};
+        (S.days || []).forEach((x) => {
+          const k = wkey(x + "T00:00");
+          o[k] = (o[k] || 0) + 1;
+        });
+        return o;
+      };
+      const streak = (o) => {
+        const g = S.perWeek || 3;
+        let k = wkey(new Date()),
+          n = (o[k] || 0) >= g ? 1 : 0;
+        for (;;) {
+          const d = new Date(k + "T00:00");
+          d.setDate(d.getDate() - 7);
+          k = iso(d);
+          if ((o[k] || 0) >= g) n++;
+          else break;
+        }
+        return n;
+      };
+      const hard = () => {
+        const h = new Set();
+        (S.langs || []).forEach((l) => (LH[l] || []).forEach((x) => h.add(x)));
+        return h;
+      };
+      const sc = (k) =>
+        S.scores && S.scores[k] != null ? S.scores[k] : hard().has(k) ? 35 : 60;
+      const overall = () => {
+        const v = Object.values(S.scores || {});
+        return v.length ? Math.round(v.reduce((a, b) => a + b) / v.length) : 0;
+      };
+      const recs = () => {
+        const sel = S.scn && S.scn.length ? S.scn : ["g"];
+        let p = W.filter((w) => sel.some((c) => w[3].includes(c)));
+        if (p.length < 5) p = W.slice();
+        return p.sort((a, b) => sc(a[2]) - sc(b[2])).slice(0, 5);
+      };
+      const diagWords = () => {
+        const ks = [...hard()];
+        Object.keys(SN).forEach((k) => ks.includes(k) || ks.push(k));
+        return ks.slice(0, 5).map((k) => W.find((w) => w[2] === k));
+      };
+      const chips = (k, opts, m) =>
+        opts
+          .map((o) => {
+            const v = Array.isArray(o) ? o[0] : o,
+              l = Array.isArray(o) ? o[1] : o,
+              on = m ? (S[k] || []).includes(v) : S[k] === v,
+              j = typeof v === "number" ? v : `'${v}'`;
+            return `<button class="chip${on ? " on" : ""}" onclick="pick('${k}',${j},${m ? 1 : 0})">${l}</button>`;
+          })
+          .join("");
+      function pick(k, v, m) {
+        if (m) {
+          S[k] = S[k] || [];
+          const i = S[k].indexOf(v);
+          i < 0 ? S[k].push(v) : S[k].splice(i, 1);
+        } else S[k] = v;
+        if (k === "months") S.why = v ? "deadline" : "fun";
+        save();
+        draw();
+      }
+      function say(w, r = 0.85) {
+        try {
+          speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(w);
+          u.lang = AC[S.accent] || "en-US";
+          u.rate = r;
+          speechSynthesis.speak(u);
+        } catch (e) {}
+      }
+      const TG = {
+        th: [80, 66],
+        rl: [120, 44],
+        vw: [110, 76],
+        bv: [110, 76],
+        sc: [108, 50],
+        ie: [106, 70],
+      };
+      const mouth = (k) => {
+        const [x, y] = TG[k];
+        return `<svg viewBox="0 0 220 120" role="img" aria-label="Where your tongue goes" style="width:100%;max-height:130px"><rect x="20" y="14" width="190" height="92" rx="44" fill="none" stroke="var(--line)" stroke-width="3"/><rect x="26" y="34" width="14" height="22" rx="4" fill="var(--card)" stroke="var(--mut)"/><rect x="26" y="64" width="14" height="22" rx="4" fill="var(--card)" stroke="var(--mut)"/><ellipse cx="${x}" cy="${y}" rx="46" ry="14" fill="var(--acc)" opacity=".85"/><text x="${x}" y="${y + 4}" font-size="11" fill="#fff" text-anchor="middle">tongue</text><text x="33" y="104" font-size="10" fill="var(--mut)" text-anchor="middle">teeth</text></svg>`;
+      };
+      const go = (s) => {
+        scr = s;
+        draw();
+        scrollTo(0, 0);
+      };
+      function startPractice(q, mode) {
+        releaseTakeUrl(P?.url);
+        P = { q, i: 0, mode, rec: 0 };
+        go("pr");
+      }
+      function closePractice() {
+        const destination = P.mode === "diag" ? "dg" : "home";
+        if (P.starting) {
+          P.cancelStart = 1;
+          P.starting = 0;
+          go(destination);
+          return;
+        }
+        if (P.rec || P.chk) {
+          P.exitAfter = destination;
+          if (P.rec) rcStop();
+          else draw();
+          return;
+        }
+        releaseTakeUrl(P.url);
+        go(destination);
+      }
+      const drill = (w) =>
+        startPractice([W.find((x) => x[0] === w)], "practice");
+      const scn = (k) =>
+        startPractice(
+          W.filter((w) => w[3].includes(k))
+            .sort((a, b) => sc(a[2]) - sc(b[2]))
+            .slice(0, 6),
+          "practice",
+        );
+      function resetW() {
+        releaseTakeUrl(P.url);
+        P.res =
+          P.url =
+          P.heard =
+          P.self =
+          P.noMic =
+          P.speechError =
+          P.storageError =
+            null;
+        P.chk = P.starting = 0;
+        draw();
+      }
+      const again = resetW;
+      function nextW() {
+        if (P.i < P.q.length - 1) {
+          releaseTakeUrl(P.url);
+          P.i++;
+          resetW();
+        } else {
+          if (P.mode === "diag") {
+            S.diag = 1;
+            save();
+          }
+          releaseTakeUrl(P.url);
+          go("home");
+        }
+      }
+      async function rcStart() {
+        if (P.rec || P.starting) return;
+        const session = P;
+        P.heard = null;
+        P.speechError = null;
+        P.noMic = null;
+        P.storageError = null;
+        P.starting = 1;
+        draw();
+        let stream;
+        try {
+          if (!navigator.mediaDevices?.getUserMedia)
+            throw new Error(
+              "Microphone access is not available in this browser.",
+            );
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          if (P !== session || session.cancelStart) {
+            stream.getTracks().forEach((t) => t.stop());
+            return;
+          }
+          if (!window.MediaRecorder)
+            throw new Error(
+              "Audio recording is not supported in this browser.",
+            );
+          P.ch = [];
+          P.mediaDone = 0;
+          P.speechDone = 0;
+          P.finished = 0;
+          P.mr = new MediaRecorder(stream);
+          P.mr.ondataavailable = (e) => {
+            if (e.data?.size) P.ch.push(e.data);
+          };
+          P.mr.onerror = () => {
+            P.storageError =
+              "The recording could not be captured. Please try again.";
+            rcStop();
+          };
+          P.stream = stream;
+          P.mr.onstop = () => {
+            if (P.mediaTimer) clearTimeout(P.mediaTimer);
+            stream.getTracks().forEach((t) => t.stop());
+            P.stream = null;
+            P.mediaDone = 1;
+            maybeFinish();
+          };
+          P.mr.start();
+        } catch (e) {
+          stream?.getTracks().forEach((t) => t.stop());
+          if (P !== session || session.cancelStart) return;
+          P.stream = null;
+          P.starting = 0;
+          P.rec = 0;
+          P.noMic = 1;
+          P.speechError =
+            e.message ||
+            "The microphone is unavailable. You can still rate yourself.";
+          draw();
+          return;
+        }
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SR) {
+          try {
+            P.sr = new SR();
+            P.sr.lang = AC[S.accent] || "en-US";
+            P.sr.maxAlternatives = 3;
+            P.sr.interimResults = false;
+            P.sr.onresult = (e) => {
+              if (P.finished) return;
+              const heard = [];
+              for (let i = e.resultIndex; i < e.results.length; i++)
+                if (e.results[i].isFinal)
+                  for (let j = 0; j < e.results[i].length; j++) {
+                    const transcript = e.results[i][j].transcript
+                      .toLowerCase()
+                      .trim();
+                    if (transcript) heard.push(transcript);
+                  }
+              if (heard.length) P.heard = [...(P.heard || []), ...heard];
+            };
+            P.sr.onerror = (e) => {
+              P.speechError =
+                e.error === "not-allowed"
+                  ? "Speech recognition permission was denied. You can rate yourself instead."
+                  : e.error === "no-speech"
+                    ? "I could not hear a clear word. You can rate yourself or try again."
+                    : "Speech recognition stopped unexpectedly. You can rate yourself or try again.";
+              P.speechDone = 1;
+              maybeFinish();
+            };
+            P.sr.onend = () => {
+              P.speechDone = 1;
+              maybeFinish();
+            };
+            P.sr.start();
+          } catch (e) {
+            P.sr = null;
+            P.speechDone = 1;
+            P.speechError =
+              "Speech recognition could not start. You can rate yourself instead.";
+          }
+        } else {
+          P.speechDone = 1;
+          P.speechError =
+            "Speech recognition is not supported here. You can rate yourself instead.";
+        }
+        P.starting = 0;
+        P.rec = 1;
+        draw();
+      }
+      function rcStop() {
+        if (!P || (!P.rec && !P.starting)) return;
+        P.starting = 0;
+        P.rec = 0;
+        P.chk = 1;
+        if (P.sr)
+          try {
+            P.sr.stop();
+          } catch (e) {
+            P.speechDone = 1;
+          }
+        else P.speechDone = 1;
+        if (P.mr && P.mr.state !== "inactive")
+          try {
+            P.mr.stop();
+          } catch (e) {
+            P.storageError = "The recording could not be finalized.";
+            P.stream?.getTracks().forEach((t) => t.stop());
+            P.stream = null;
+            P.mediaDone = 1;
+          }
+        else if (!P.mr) P.mediaDone = 1;
+        else if (!P.mediaDone)
+          P.mediaTimer = setTimeout(() => {
+            P.stream?.getTracks().forEach((t) => t.stop());
+            P.stream = null;
+            P.mediaDone = 1;
+            maybeFinish();
+          }, 10000);
+        if (!P.speechDone)
+          P.speechTimer = setTimeout(() => {
+            P.speechDone = 1;
+            maybeFinish();
+          }, 10000);
+        maybeFinish();
+        draw();
+      }
+      function maybeFinish() {
+        if (P && P.chk && P.mediaDone && P.speechDone) finish();
+      }
+      function finish() {
+        if (!P || P.finished) return;
+        const exitAfter = P.exitAfter;
+        P.finished = 1;
+        if (P.speechTimer) clearTimeout(P.speechTimer);
+        if (P.mediaTimer) clearTimeout(P.mediaTimer);
+        const session = P,
+          index = P.i,
+          w = P.q[index],
+          b = new Blob(P.ch, { type: P.mr?.mimeType || "audio/webm" });
+        if (b.size) {
+          P.url = URL.createObjectURL(b);
+          saveRecording(w[0], b)
+            .then(() => {
+              if ((P === session && P.i === index) || scr === "pf") draw();
+            })
+            .catch((e) => {
+              rcStorageError =
+                e.message ||
+                "This recording could not be saved for later comparison.";
+              if (P === session && P.i === index) {
+                P.storageError = rcStorageError;
+                draw();
+              } else if (scr === "pf") draw();
+            });
+        } else
+          P.storageError =
+            "No audio was captured. Check your microphone and try again.";
+        P.chk = 0;
+        judge();
+        draw();
+        if (exitAfter) go(exitAfter);
+      }
+      function judge() {
+        const w = P.q[P.i],
+          h = P.heard;
+        if (!h || !h.length) {
+          P.self = 1;
+          return;
+        }
+        if (h.some((x) => x.includes(w[0])))
+          grade(92, `Clear. It came through as “${w[0]}”.`);
+        else if (h.some((x) => x.includes(w[1])))
+          grade(35, `That sounded like “${w[1]}”. ${TIP[w[2]]}`);
+        else
+          grade(
+            55,
+            `I heard “${esc(h[0])}”. Slow down and try again. ${TIP[w[2]]}`,
+          );
+      }
+      function grade(s, msg) {
+        const w = P.q[P.i],
+          k = w[2];
+        S.scores = S.scores || {};
+        S.scores[k] = P.mode === "diag" ? s : Math.round(sc(k) * 0.6 + s * 0.4);
+        if (P.mode !== "diag") {
+          const t = iso(new Date());
+          S.done = S.done || {};
+          S.done[t] = (S.done[t] || 0) + 1;
+          S.days = S.days || [];
+          if (S.done[t] >= 3 && !S.days.includes(t)) S.days.push(t);
+        }
+        P.res = { s, msg };
+        save();
+        draw();
+      }
+      function nx() {
+        if (ob === 0) {
+          const v = $("#nm").value.trim();
+          if (!v) {
+            $("#nm").focus();
+            return;
+          }
+          S.name = v;
+        }
+        if (ob === 1 && !S.perWeek) S.perWeek = 3;
+        if (ob === 2 && !S.why) S.why = "fun";
+        if (ob === 2 && S.why === "deadline" && !S.months) S.months = 3;
+        if (ob === 5 && !S.accent) S.accent = "Not sure yet";
+        save();
+        if (ob < 5) {
+          ob++;
+          draw();
+        } else {
+          S.ready = 1;
+          S.start = Date.now();
+          save();
+          go("dg");
+        }
+      }
+      function dpDone() {
+        const ch = S.hp || [];
+        S.scores = {};
+        Object.keys(SN).forEach(
+          (k) => (S.scores[k] = ch.includes(k) ? 25 : hard().has(k) ? 45 : 65),
+        );
+        S.diag = 1;
+        save();
+        go("home");
+      }
+      function notif(on) {
+        S.notif = on;
+        save();
+        if (on && window.Notification)
+          try {
+            Notification.requestPermission();
+          } catch (e) {}
+      }
+      async function logout() {
+        if (!lo) {
+          lo = 1;
+          draw();
+          return;
+        }
+        try {
+          await rcSaveQueue;
+          if (window.indexedDB) {
+            const db = await openRCDB(),
+              tx = db.transaction("recordings", "readwrite"),
+              done = new Promise((resolve, reject) => {
+                tx.oncomplete = resolve;
+                tx.onerror = () =>
+                  reject(
+                    tx.error ||
+                      new Error("Saved recordings could not be erased."),
+                  );
+                tx.onabort = () =>
+                  reject(
+                    tx.error ||
+                      new Error("Saved recordings could not be erased."),
+                  );
+              });
+            tx.objectStore("recordings").clear();
+            await done;
+          }
+          localStorage.removeItem(K);
+          localStorage.removeItem(R);
+        } catch (e) {
+          lo = 0;
+          rcStorageError =
+            e.message || "Data could not be erased from this browser.";
+          draw();
+          return;
+        }
+        const urls = new Set(
+          [
+            P?.url,
+            ...Object.values(RC).flatMap((r) => [r.first?.d, r.last?.d]),
+          ].filter(Boolean),
+        );
+        S = {};
+        RC = {};
+        urls.forEach(URL.revokeObjectURL);
+        rcStorageError = "";
+        lo = 0;
+        ob = 0;
+        go("ob");
+      }
 
-const OB=[
-()=>`<h1>Hi. What should we call you?</h1><input id="nm" class="in" value="${esc(S.name||'')}" placeholder="First name" autocomplete="given-name">`,
-()=>`<h1>How many days a week can you practice?</h1><p class="m">Your streak is built on this number, so pick one you can keep.</p>${chips('perWeek',[1,2,3,4,5,6,7].map(n=>[n,n+'×']))}`,
-()=>`<h1>Is there a deadline?</h1>${chips('why',[['deadline','Yes, I have a date'],['fun','No, it’s for me']])}${S.why==='deadline'?`<p class="m">How long do you have?</p>${chips('months',[[1,'1 month'],[3,'3 months'],[6,'6 months'],[12,'A year']])}`:''}`,
-()=>`<h1>Where will you use English?</h1><p class="m">Pick all that apply.</p>${chips('scn',Object.entries(SC),1)}`,
-()=>`<h1>Which languages do you speak?</h1><p class="m">We use this to predict which English sounds are hardest for you.</p>${chips('langs',Object.keys(LH),1)}`,
-()=>`<h1>Which accent are you aiming for?</h1>${chips('accent',[...Object.keys(AC),'Not sure yet'])}`];
+      const OB = [
+        () =>
+          `<h1>Hi. What should we call you?</h1><input id="nm" class="in" value="${esc(S.name || "")}" placeholder="First name" autocomplete="given-name">`,
+        () =>
+          `<h1>How many days a week can you practice?</h1><p class="m">Your streak is built on this number, so pick one you can keep.</p>${chips(
+            "perWeek",
+            [1, 2, 3, 4, 5, 6, 7].map((n) => [n, n + "×"]),
+          )}`,
+        () =>
+          `<h1>Is there a deadline?</h1>${chips("why", [
+            ["deadline", "Yes, I have a date"],
+            ["fun", "No, it’s for me"],
+          ])}${
+            S.why === "deadline"
+              ? `<p class="m">How long do you have?</p>${chips("months", [
+                  [1, "1 month"],
+                  [3, "3 months"],
+                  [6, "6 months"],
+                  [12, "A year"],
+                ])}`
+              : ""
+          }`,
+        () =>
+          `<h1>Where will you use English?</h1><p class="m">Pick all that apply.</p>${chips("scn", Object.entries(SC), 1)}`,
+        () =>
+          `<h1>Which languages do you speak?</h1><p class="m">We use this to predict which English sounds are hardest for you.</p>${chips("langs", Object.keys(LH), 1)}`,
+        () =>
+          `<h1>Which accent are you aiming for?</h1>${chips("accent", [...Object.keys(AC), "Not sure yet"])}`,
+      ];
 
-const nav=()=>`<nav>${[['home','Home'],['sn','Practice'],['pf','Profile']].map(([k,l])=>`<button class="${scr===k?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}</nav>`;
-const V={
-ob:()=>`<div class="bar"><i style="width:${(ob+1)/6*100}%"></i></div><p class="m">Question ${ob+1} of 6</p>${OB[ob]()}<div class="row2" style="margin-top:18px">${ob?'<button class="btn ghost" onclick="ob--;draw()">Back</button>':''}<button class="btn" onclick="nx()">${ob===5?'Finish':'Continue'}</button></div>`,
-dg:()=>`<h1>Let’s find your starting point</h1><p class="m">Takes about two minutes. We’ll compare it to your first recordings later.</p>
+      const nav = () =>
+        `<nav>${[
+          ["home", "Home"],
+          ["sn", "Practice"],
+          ["pf", "Profile"],
+        ]
+          .map(
+            ([k, l]) =>
+              `<button class="${scr === k ? "on" : ""}" onclick="go('${k}')">${l}</button>`,
+          )
+          .join("")}</nav>`;
+      const V = {
+        ob: () =>
+          `<div class="bar"><i style="width:${((ob + 1) / 6) * 100}%"></i></div><p class="m">Question ${ob + 1} of 6</p>${OB[ob]()}<div class="row2" style="margin-top:18px">${ob ? '<button class="btn ghost" onclick="ob--;draw()">Back</button>' : ""}<button class="btn" onclick="nx()">${ob === 5 ? "Finish" : "Continue"}</button></div>`,
+        dg: () => `<h1>Let’s find your starting point</h1><p class="m">Takes about two minutes. We’ll compare it to your first recordings later.</p>
 <button class="card scn" onclick="startPractice(diagWords(),'diag')"><span><b>Say the words I hear</b><br><span class="m">Five words picked from your languages</span></span></button>
 <button class="card scn" onclick="go('dp')"><span><b>Pick sounds I find hard</b><br><span class="m">Faster, no microphone needed</span></span></button>
 <button class="lnk" onclick="go('home')">Skip for now</button>`,
-dp:()=>`<h1>Which sounds trip you up?</h1><p class="m">Pick all that apply.</p>${chips('hp',Object.entries(SN),1)}<button class="btn" onclick="dpDone()">Save and continue</button>`,
-home:()=>{const t=iso(new Date()),dn=S.done&&S.done[t]||0,wk=weeks(),cur=wk[wkey(new Date())]||0,g=S.perWeek||3,ov=overall(),mon=new Date(wkey(new Date())+'T00:00');
- const dots=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return `<b class="dot${(S.days||[]).includes(iso(d))?' on':''}">${'MTWTFSS'[i]}</b>`}).join('');
- let tl='<p class="m">No deadline. Go at your own pace.</p>';
- if(S.why==='deadline'&&S.months){const tot=S.months*30,el=Math.min(tot,Math.floor((Date.now()-(S.start||Date.now()))/864e5)),tp=Math.round(el/tot*100),rd=Math.min(100,Math.round(ov/80*100));
-  tl=`<p>${tot-el} days left</p><p class="m">Time used</p><div class="bar"><i style="width:${tp}%;background:var(--mut)"></i></div><p class="m">Readiness for ${esc(S.accent||'your')} accent goals</p><div class="bar"><i style="width:${rd}%"></i></div><p class="m">${rd>=tp-10?'You’re on pace.':'You’re behind pace. One more session this week helps.'}</p>`}
- const ks=Object.keys(SN).sort((a,b)=>sc(a)-sc(b));
- return `<h1>Hey ${esc(S.name||'there')}</h1><p class="m">${esc(S.accent||'')} accent, ${g}× a week</p>
- ${S.diag?'':`<button class="card scn" onclick="go('dg')"><span><b>Take the placement check</b><br><span class="m">So your drills fit your sounds</span></span></button>`}
- <div class="card"><h3>Today</h3><p class="m">${dn} of 5 words</p><div class="bar"><i style="width:${Math.min(100,dn*20)}%"></i></div><button class="btn" onclick="startPractice(recs(),'practice')">Start today’s words</button></div>
- <div class="card"><div class="row"><h3>Streak</h3><span class="m">${cur} of ${g} days this week</span></div><div class="st big">${streak(wk)}<span class="m" style="font-size:20px"> week${streak(wk)===1?'':'s'}</span></div><div style="margin:8px 0">${dots}</div><p class="m">Practice 3 or more words to count a day. A missed day won’t break your streak. Ending a week under ${g} will.</p></div>
+        dp: () =>
+          `<h1>Which sounds trip you up?</h1><p class="m">Pick all that apply.</p>${chips("hp", Object.entries(SN), 1)}<button class="btn" onclick="dpDone()">Save and continue</button>`,
+        home: () => {
+          const t = iso(new Date()),
+            dn = (S.done && S.done[t]) || 0,
+            wk = weeks(),
+            cur = wk[wkey(new Date())] || 0,
+            g = S.perWeek || 3,
+            ov = overall(),
+            mon = new Date(wkey(new Date()) + "T00:00");
+          const dots = [...Array(7)]
+            .map((_, i) => {
+              const d = new Date(mon);
+              d.setDate(d.getDate() + i);
+              return `<b class="dot${(S.days || []).includes(iso(d)) ? " on" : ""}">${"MTWTFSS"[i]}</b>`;
+            })
+            .join("");
+          let tl = '<p class="m">No deadline. Go at your own pace.</p>';
+          if (S.why === "deadline" && S.months) {
+            const tot = S.months * 30,
+              el = Math.min(
+                tot,
+                Math.floor((Date.now() - (S.start || Date.now())) / 864e5),
+              ),
+              tp = Math.round((el / tot) * 100),
+              rd = Math.min(100, Math.round((ov / 80) * 100));
+            tl = `<p>${tot - el} days left</p><p class="m">Time used</p><div class="bar"><i style="width:${tp}%;background:var(--mut)"></i></div><p class="m">Readiness for ${esc(S.accent || "your")} accent goals</p><div class="bar"><i style="width:${rd}%"></i></div><p class="m">${rd >= tp - 10 ? "You’re on pace." : "You’re behind pace. One more session this week helps."}</p>`;
+          }
+          const ks = Object.keys(SN).sort((a, b) => sc(a) - sc(b));
+          return `<h1>Hey ${esc(S.name || "there")}</h1><p class="m">${esc(S.accent || "")} accent, ${g}× a week</p>
+ ${S.diag ? "" : `<button class="card scn" onclick="go('dg')"><span><b>Take the placement check</b><br><span class="m">So your drills fit your sounds</span></span></button>`}
+ <div class="card"><h3>Today</h3><p class="m">${dn} of 5 words</p><div class="bar"><i style="width:${Math.min(100, dn * 20)}%"></i></div><button class="btn" onclick="startPractice(recs(),'practice')">Start today’s words</button></div>
+ <div class="card"><div class="row"><h3>Streak</h3><span class="m">${cur} of ${g} days this week</span></div><div class="st big">${streak(wk)}<span class="m" style="font-size:20px"> week${streak(wk) === 1 ? "" : "s"}</span></div><div style="margin:8px 0">${dots}</div><p class="m">Practice 3 or more words to count a day. A missed day won’t break your streak. Ending a week under ${g} will.</p></div>
  <div class="card"><h3>Path to your goal</h3>${tl}</div>
- <div class="card"><h3>Learning progress</h3>${ks.map(k=>`<div class="row"><span>${SN[k]}</span><span class="m">${sc(k)}%</span></div><div class="bar"><i style="width:${sc(k)}%"></i></div>`).join('')}</div>
- <div class="card"><h3>Words worth fixing</h3><p class="m">Mix-ups that change your meaning.</p>${recs().slice(0,4).map(w=>`<div class="row"><span><b>${w[0]}</b> <span class="m">vs ${w[1]}</span></span><button class="chip" onclick="drill('${w[0]}')">Drill</button></div>`).join('')}</div>
- <div class="card"><h3>Other accents</h3><p class="m">Practicing a second language’s accent is coming later.</p></div>${nav()}`},
-sn:()=>`<h1>What are you practicing for?</h1><p class="m">We pick the words that matter most there.</p>${Object.entries(SC).map(([k,l])=>`<button class="card scn" onclick="scn('${k}')"><b>${l}</b><span class="m">${W.filter(w=>w[3].includes(k)).length} words</span></button>`).join('')}${nav()}`,
-pr:()=>{const w=P.q[P.i],last=P.i===P.q.length-1,self=(P.self||P.noMic)&&!P.res;
- return `<div class="row"><button class="lnk" onclick="go('${P.mode==='diag'?'dg':'home'}')">Close</button><span class="m">Word ${P.i+1} of ${P.q.length}</span></div>
+ <div class="card"><h3>Learning progress</h3>${ks.map((k) => `<div class="row"><span>${SN[k]}</span><span class="m">${sc(k)}%</span></div><div class="bar"><i style="width:${sc(k)}%"></i></div>`).join("")}</div>
+ <div class="card"><h3>Words worth fixing</h3><p class="m">Mix-ups that change your meaning.</p>${recs()
+   .slice(0, 4)
+   .map(
+     (w) =>
+       `<div class="row"><span><b>${w[0]}</b> <span class="m">vs ${w[1]}</span></span><button class="chip" onclick="drill('${w[0]}')">Drill</button></div>`,
+   )
+   .join("")}</div>
+ <div class="card"><h3>Other accents</h3><p class="m">Practicing a second language’s accent is coming later.</p></div>${nav()}`;
+        },
+        sn: () =>
+          `<h1>What are you practicing for?</h1><p class="m">We pick the words that matter most there.</p>${Object.entries(
+            SC,
+          )
+            .map(
+              ([k, l]) =>
+                `<button class="card scn" onclick="scn('${k}')"><b>${l}</b><span class="m">${W.filter((w) => w[3].includes(k)).length} words</span></button>`,
+            )
+            .join("")}${nav()}`,
+        pr: () => {
+          const w = P.q[P.i],
+            last = P.i === P.q.length - 1,
+            self =
+              !P.rec &&
+              !P.chk &&
+              !P.starting &&
+              (P.self || P.noMic || P.speechError) &&
+              !P.res;
+          return `<div class="row"><button class="lnk" onclick="closePractice()" ${P.exitAfter ? "disabled" : ""}>${P.exitAfter ? "Finishing…" : "Close"}</button><span class="m">Word ${P.i + 1} of ${P.q.length}</span></div>
  <div class="card c"><div class="big">${w[0]}</div><p class="m">Not “${w[1]}”</p><div class="row2"><button class="btn ghost" onclick="say('${w[0]}')">Hear it</button><button class="btn ghost" onclick="say('${w[0]}',.5)">Slower</button></div></div>
  <div class="card">${mouth(w[2])}<p>${TIP[w[2]]}</p></div>
- ${P.rec?'<button class="btn live" onclick="rcStop()">Stop and check</button>':(P.res||self||P.chk)?'':'<button class="btn" onclick="rcStart()">Record yourself</button>'}
- ${P.chk?'<p class="m">Checking…</p>':''}
- ${P.noMic?'<p class="m">The microphone is blocked here. Say the word out loud, then rate it.</p>':''}
- ${P.url?`<div class="card"><b>Your take</b><audio controls src="${P.url}"></audio></div>`:''}
- ${self?`<div class="card"><b>How did that sound?</b><div class="row2" style="margin-top:8px">${[[90,'Nailed it'],[60,'Close'],[30,'Not yet']].map(([s,l])=>`<button class="btn ghost" onclick="grade(${s},'You rated this “${l}”. ${s>80?'Nice.':'Replay the model, then try again.'}')">${l}</button>`).join('')}</div></div>`:''}
- ${P.res?`<div class="card"><div class="bar"><i style="width:${P.res.s}%"></i></div><p>${P.res.msg}</p><div class="row2"><button class="btn ghost" onclick="again()">Try again</button><button class="btn" onclick="nextW()">${last?'Finish':'Next word'}</button></div></div>`:''}`},
-pf:()=>{const pairs=Object.entries(RC).filter(([,r])=>r.first&&r.last&&r.last.t-r.first.t>6e4);
- return `<h1>${esc(S.name||'You')}</h1>
- <div class="card"><h3>You then, you now</h3>${pairs.length?pairs.map(([w,r])=>`<p><b>${esc(w)}</b></p><small class="m">First take</small><audio controls src="${r.first.d}"></audio><small class="m">Latest</small><audio controls src="${r.last.d}"></audio>`).join(''):'<p class="m">We keep your first recording of every word. Practice a word again another day and both takes show up here.</p>'}</div>
- <div class="card"><h3>Goals</h3><p class="m">Days per week</p>${chips('perWeek',[1,2,3,4,5,6,7].map(n=>[n,n+'×']))}<p class="m">Deadline</p>${chips('months',[[0,'None'],[1,'1 month'],[3,'3 months'],[6,'6 months'],[12,'A year']])}<p class="m">Accent</p>${chips('accent',[...Object.keys(AC),'Not sure yet'])}<p class="m">Situations</p>${chips('scn',Object.entries(SC),1)}</div>
- <div class="card"><h3>Notifications</h3><label class="row"><span>Practice reminders</span><input type="checkbox" ${S.notif?'checked':''} onchange="notif(this.checked)"></label><label class="row"><span>Remind me at</span><input type="time" value="${S.nt||'18:00'}" onchange="S.nt=this.value;save()"></label><p class="m">Reminders only work while Lilt is open in your browser.</p></div>
- <div class="card"><h3>Account</h3><button class="btn ghost" onclick="go('dg')">Retake placement check</button><button class="btn ghost" onclick="logout()">${lo?'Tap again to erase this device’s data and log out':'Log out'}</button></div>${nav()}`}
-};
-function draw(){$('#app').innerHTML=V[scr]()}
+ ${P.starting ? '<button class="btn" disabled>Requesting microphone…</button>' : P.rec ? '<button class="btn live" onclick="rcStop()">Stop and check</button>' : P.res || P.chk ? "" : `<button class="btn" onclick="rcStart()">${self ? "Try recording again" : "Record yourself"}</button>`}
+ ${P.chk ? '<p class="m">Checking…</p>' : ""}
+ ${P.noMic ? `<p class="m" role="status">${esc(P.speechError || "The microphone is unavailable. You can still rate yourself.")}</p>` : ""}
+ ${P.speechError && !P.noMic ? `<p class="m" role="status">${esc(P.speechError)}</p>` : ""}
+ ${P.url ? `<div class="card"><b>Your take</b><audio controls src="${P.url}"></audio></div>` : ""}
+ ${P.storageError ? `<p class="m" role="status">${esc(P.storageError)}</p>` : ""}
+ ${
+   self
+     ? `<div class="card"><b>How did that sound?</b><div class="row2" style="margin-top:8px">${[
+         [90, "Nailed it"],
+         [60, "Close"],
+         [30, "Not yet"],
+       ]
+         .map(
+           ([s, l]) =>
+             `<button class="btn ghost" onclick="grade(${s},'You rated this “${l}”. ${s > 80 ? "Nice." : "Replay the model, then try again."}')">${l}</button>`,
+         )
+         .join("")}</div></div>`
+     : ""
+ }
+ ${P.res ? `<div class="card"><div class="bar"><i style="width:${P.res.s}%"></i></div><p>${P.res.msg}</p><div class="row2"><button class="btn ghost" onclick="again()">Retake</button><button class="btn" onclick="nextW()">${last ? "Finish" : "Next word"}</button></div></div>` : ""}`;
+        },
+        pf: () => {
+          const pairs = Object.entries(RC).filter(
+            ([, r]) => r.first && r.last && r.first.t !== r.last.t,
+          );
+          return `<h1>${esc(S.name || "You")}</h1>
+<div class="card"><h3>You then, you now</h3>${pairs.length ? pairs.map(([w, r]) => `<p><b>${esc(w)}</b></p><small class="m">First take</small><audio controls src="${r.first.d}"></audio><small class="m">Latest</small><audio controls src="${r.last.d}"></audio>`).join("") : '<p class="m">We keep your first and latest recording of each word you retake. Try a word again to compare your takes here.</p>'}${rcStorageError ? `<p class="m" role="status">${esc(rcStorageError)}</p>` : ""}</div>
+ <div class="card"><h3>Goals</h3><p class="m">Days per week</p>${chips(
+   "perWeek",
+   [1, 2, 3, 4, 5, 6, 7].map((n) => [n, n + "×"]),
+ )}<p class="m">Deadline</p>${chips("months", [
+   [0, "None"],
+   [1, "1 month"],
+   [3, "3 months"],
+   [6, "6 months"],
+   [12, "A year"],
+ ])}<p class="m">Accent</p>${chips("accent", [...Object.keys(AC), "Not sure yet"])}<p class="m">Situations</p>${chips("scn", Object.entries(SC), 1)}</div>
+ <div class="card"><h3>Notifications</h3><label class="row"><span>Practice reminders</span><input type="checkbox" ${S.notif ? "checked" : ""} onchange="notif(this.checked)"></label><label class="row"><span>Remind me at</span><input type="time" value="${S.nt || "18:00"}" onchange="S.nt=this.value;save()"></label><p class="m">Reminders only work while Lilt is open in your browser.</p></div>
+ <div class="card"><h3>Account</h3><button class="btn ghost" onclick="go('dg')">Retake placement check</button><button class="btn ghost" onclick="logout()">${lo ? "Tap again to erase this device’s data and log out" : "Log out"}</button></div>${nav()}`;
+        },
+      };
+      function draw() {
+        $("#app").innerHTML = V[scr]();
+      }
 
-$('#sp').innerHTML=`<div class="wave">${[...Array(25)].map((_,i)=>`<i style="--a:${(.22+.78*Math.abs(Math.sin(i*.55+.4))).toFixed(2)};animation-delay:${(i*.06).toFixed(2)}s;background:${i%3?'var(--p)':'var(--t)'}"></i>`).join('')}</div><h1>lilt</h1><p>Say it so they get it.</p>`;
-go(S.ready?'home':'ob');
-setTimeout(()=>{$('#sp').classList.add('out');setTimeout(()=>$('#sp').remove(),500)},2800);
-</script></body></html>
+      $("#sp").innerHTML =
+        `<div class="wave">${[...Array(25)].map((_, i) => `<i style="--a:${(0.22 + 0.78 * Math.abs(Math.sin(i * 0.55 + 0.4))).toFixed(2)};animation-delay:${(i * 0.06).toFixed(2)}s;background:${i % 3 ? "var(--p)" : "var(--t)"}"></i>`).join("")}</div><h1>lilt</h1><p>Say it so they get it.</p>`;
+      go(S.ready ? "home" : "ob");
+      loadRecordings();
+      setTimeout(() => {
+        $("#sp").classList.add("out");
+        setTimeout(() => $("#sp").remove(), 500);
+      }, 2800);
+    </script>
+  </body>
+</html>
