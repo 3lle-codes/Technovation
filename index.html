@@ -1,9 +1,26 @@
 <!doctype html>
+<!--
+  Imminent - single-file website prototype
+  Main website file: index.html
+
+  Site structure:
+  - My Timeline: personalized first page and progress checklist
+  - Immigration: trusted resources and county-level searches
+  - Language Support: Everyday Lessons and separate Pronunciation Studio subpage
+  - Communities Around You: discover local cultural spaces
+  - Community Circle: discussion board prototype (separate from Communities)
+  - Log In / Profile: browser-session demo profile
+
+  The current site runs entirely in the browser; there is no connected
+  authentication, discussion server, or immigration case management backend.
+  Do not collect sensitive immigration or identifying information here.
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#fcfaf8">
-<title>Immily — A place to begin, a place to belong</title>
+<title>Imminent — Your personalized journey</title>
 <style>
+/* ===== BASE STYLES: shared layout, text, buttons, and cards ===== */
 :root{--ink:#38231b;--mut:#6f645d;--o:#fa8128;--od:#c4491a;--bd:#f0e7df;--wash:#fff7f0;--br:#893101;--g:#2b6b55}
 *{box-sizing:border-box}body{margin:0;background:#fcfaf8;color:var(--ink);font:15px/1.5 Inter,system-ui,-apple-system,"Segoe UI","Noto Sans KR","Noto Sans SC",sans-serif}
 a{color:inherit}button,input,select,textarea{font:inherit}button{cursor:pointer}:focus-visible{outline:3px solid #e8741f;outline-offset:2px}
@@ -37,19 +54,62 @@ h1{font-size:clamp(28px,3.4vw,40px);line-height:1.12;letter-spacing:-1.2px;margi
 .foot{margin-top:36px;border-top:1px solid #ece1d9;padding-top:16px;font-size:12px;color:var(--mut)}
 .skip{position:absolute;left:-999px}.skip:focus{left:8px;top:8px;z-index:99;background:#fff;padding:8px 12px;border-radius:8px}.card{transition:.15s}.card:hover{border-color:#efdac8;transform:translateY(-2px)}
 @media(max-width:900px){.app{grid-template-columns:1fr}.side{position:fixed;bottom:0;left:0;right:0;top:auto;height:auto;z-index:9;flex-direction:row;padding:6px;border-top:1px solid var(--bd);border-right:0}.brand,.note{display:none}.nav{grid-auto-flow:column;width:100%}.nav button{flex-direction:column;gap:2px;font-size:10px;padding:8px 2px;justify-content:center;text-align:center}.main{padding-bottom:90px}.g2,.g3{grid-template-columns:1fr}.hero{padding:26px}}
+
+/* ===== UPDATED PAGE LAYOUT =====
+   Replaces the original sidebar layout with top navigation.
+   Mobile screens retain a horizontal, scrollable top menu.
+   Timeline and Language Support subpage styles are defined below.
+*/
+.app{display:flex;flex-direction:column;max-width:1500px;margin:auto;min-height:100vh}
+.side{position:sticky;top:0;left:auto;right:auto;bottom:auto;z-index:20;width:100%;height:auto;min-height:82px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:18px;padding:14px clamp(18px,4vw,56px);border:0;border-bottom:1px solid var(--bd);background:rgba(255,255,255,.97);backdrop-filter:blur(12px)}
+.brand{flex:none;padding:0;margin:0;white-space:nowrap;font-size:23px}
+.nav{display:flex;flex-direction:row;gap:3px;align-items:center;min-width:0;overflow-x:auto;scrollbar-width:thin;padding:2px 0}
+.nav button{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;flex:none;text-align:center;padding:10px 11px;font-size:12.5px}
+.nav button.on{background:#fff1e6;color:#8a3a10}
+.note{display:none}
+.main{flex:1;padding:21px clamp(18px,4vw,56px) 48px}
+.top{margin-bottom:19px;justify-content:flex-end}
+.timeline-intro{padding:6px 0 4px}
+.timeline-intro h1{font-size:clamp(29px,4vw,46px);max-width:800px}
+.personalize{background:#fff;border:1px solid var(--bd);border-radius:18px;padding:18px;margin:18px 0;box-shadow:0 10px 28px rgba(74,44,25,.04)}
+.personalize .row{align-items:end}
+.personalize .row>div{min-width:160px}
+.timeline-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:27px 0 10px}
+.timeline-head h2{margin:0}
+.journey{background:#fff;border:1px solid var(--bd);border-radius:19px;padding:7px 24px;box-shadow:0 10px 28px rgba(74,44,25,.04)}
+.mile{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:13px;align-items:start;position:relative;padding:20px 0;border-bottom:1px solid #f1e6de}
+.mile:last-child{border-bottom:0}
+.mile-num{display:grid;place-items:center;border-radius:50%;width:33px;height:33px;background:#fff0e5;border:2px solid #f0c49f;color:#974318;font-weight:800;position:relative;z-index:1}
+.mile:not(:last-child) .mile-num:after{content:"";position:absolute;top:31px;left:14px;width:2px;height:44px;background:#f3dfce;z-index:-1}
+.mile.complete .mile-num{background:#eaf7ee;border-color:#b6dbc4;color:#276c48}
+.mile-body h3{margin:0 0 3px;font-size:15px}
+.mile-body p{font-size:13px;color:var(--mut);margin:0 0 7px}
+.mile-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:240px}
+.mile-actions .btn{white-space:nowrap}
+.mile-status{display:inline-block;font-size:11px;font-weight:800;color:#705c4d}
+.mile.complete .mile-status{color:var(--g)}
+.secure-tip{font-size:12px;color:var(--mut);padding:8px 0 0}
+.subnav{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0 22px;border-bottom:1px solid var(--bd);padding-bottom:13px}
+.subnav button{border:1px solid var(--bd);border-radius:999px;background:#fff;padding:9px 15px;color:#695246;font-weight:800}
+.subnav button.on{background:#fff0e5;border-color:#eeba92;color:#8a3a10}
+.section-cta{margin-top:19px;background:var(--wash);border:1px solid #f2e0d1;border-radius:14px;padding:16px}
+@media(max-width:1080px){.side{flex-wrap:wrap;gap:8px;padding:12px 18px;justify-content:center}.brand{margin-right:auto}.nav{order:2;width:100%;justify-content:space-between}.nav button{padding:9px 10px}}
+@media(max-width:900px){.app{display:flex;flex-direction:column}.side{position:sticky;top:0;bottom:auto;left:auto;right:auto;height:auto;display:flex;flex-direction:row;padding:9px 15px;border-right:0;border-top:0;border-bottom:1px solid var(--bd);z-index:20}.brand{display:flex}.note{display:none}.nav{display:flex;flex-direction:row;width:100%;overflow-x:auto;grid-auto-flow:unset;justify-content:flex-start}.nav button{flex-direction:row;gap:5px;font-size:12px;padding:9px 12px;min-width:max-content}.main{padding:15px 18px 40px}.g2,.g3{grid-template-columns:1fr}.hero{padding:26px}}
+@media(max-width:620px){.journey{padding:4px 14px}.mile{grid-template-columns:35px minmax(0,1fr);gap:10px;padding:16px 0}.mile-actions{grid-column:2;justify-content:flex-start;max-width:none}.mile:not(:last-child) .mile-num:after{height:83px}.personalize{padding:14px}.top{justify-content:flex-start;gap:7px}.nav button span:first-child{display:none}}
+@media(max-width:620px){.side{position:relative}.nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:3px;overflow:visible}.nav button{min-width:0;white-space:normal;padding:9px 5px;text-align:center;line-height:1.2;font-size:11px}.nav button span:last-child{overflow-wrap:anywhere}}
 </style></head>
 <body><div id="app"></div>
 <script>
 (()=>{'use strict';
-/* ===== DATA (kept separate from rendering) ===== */
+/* ===== RESOURCE AND LESSON DATA (separate from the UI) ===== */
 const RES=[
-{id:'rights',s:'legal',org:'Immigrant Legal Resource Center (ILRC)',t:'Know your rights',d:'Educational guides on rights in encounters with immigration enforcement. Many are available in several languages — use the originals, not translations by Immily.',u:'https://www.ilrc.org/community-resources/know-your-rights'},
+{id:'rights',s:'legal',org:'Immigrant Legal Resource Center (ILRC)',t:'Know your rights',d:'Educational guides on rights in encounters with immigration enforcement. Many are available in several languages — use the originals, not translations by Imminent.',u:'https://www.ilrc.org/community-resources/know-your-rights'},
 {id:'red',s:'legal',org:'ILRC',t:'Red Cards',d:'Printable cards summarizing rights, published in multiple languages. Preparedness materials for families are also listed there.',u:'https://www.ilrc.org/redcards'},
 {id:'ice',s:'legal',org:'U.S. Immigration and Customs Enforcement (official agency site)',t:'About ICE',d:'The agency\'s own description of its mission and operations. Read alongside independent rights resources.',u:'https://www.ice.gov/'},
 {id:'dir',s:'legal',org:'Immigration Advocates Network',t:'Legal Services Directory',d:'National directory of nonprofit immigration legal help. Search by state and county, then filter by the type of help you need.',u:'https://www.immigrationadvocates.org/legaldirectory/'},
 {id:'doj',s:'legal',org:'U.S. Department of Justice (EOIR)',t:'Recognized organizations & accredited representatives',d:'Official rosters. Check whether a representative is recognized before paying for immigration help.',u:'https://www.justice.gov/eoir/recognition-accreditation-roster-reports'},
 {id:'scam',s:'legal',org:'USCIS',t:'Avoid scams',d:'Official guidance on immigration scams and how to report them.',u:'https://www.uscis.gov/avoid-scams'},
-{id:'jobs',s:'jobs',org:'CareerOneStop (U.S. Department of Labor)',t:'Jobs, training & American Job Centers',d:'Search careers and training, and use "Find Local Help" to locate an American Job Center. Immily does not host job listings.',u:'https://www.careeronestop.org/'},
+{id:'jobs',s:'jobs',org:'CareerOneStop (U.S. Department of Labor)',t:'Jobs, training & American Job Centers',d:'Search careers and training, and use "Find Local Help" to locate an American Job Center. Imminent does not host job listings.',u:'https://www.careeronestop.org/'},
 {id:'eng',s:'jobs',org:'USAHello',t:'Free English learning',d:'Nonprofit guide to learning English online and finding classes.',u:'https://usahello.org/education/learn-english-language/'}];
 const LV=['A1','A2','B1','B2','C1','C2'];
 // [title, phrase, question, choices, answerIndex, why, vocab, explanation]
@@ -81,21 +141,25 @@ const POSTS=[{a:'Sample',l:'Korean',t:'Everyday life',h:'Where can I practice co
 const TOPICS=['Everyday life','Immigration resources','Housing','Employment','Education','Language learning','Community events'];
 const LANGS=['English','Spanish','Korean','Chinese','Other'];
 const CULT=['Korean','Mexican','Chinese','Indian','Filipino','Vietnamese','Arab','African'];
-/* ===== TRANSLATIONS (add a language = add an object) ===== */
+/* ===== INTERFACE TRANSLATIONS (add languages here) ===== */
 const T={
-en:{n:'English',home:'Dashboard',imm:'Immigration',lang:'Language Support',com:'Communities Around You',acc:'Log In / Profile',hh:'At the end of the day, we were immigrants.',hp:'A place to find your footing, practice a new language, and stay connected to the culture that makes you, you.',go:'Explore resources',start:'Your starting point',c1:'Find immigration help',c2:'Practice everyday English',c3:'Find your community',road:'Your starter checklist',k1:'Explore trusted legal help',k2:'Complete an English lesson',k3:'Explore a community space',k4:'Read the privacy guidance',done:'complete',find:'Search discussions',newp:'+ New discussion',untr:''},
-es:{n:'Español',home:'Inicio',imm:'Inmigración',lang:'Apoyo de idioma',com:'Comunidades cerca de ti',acc:'Ingresar / Perfil',hh:'Al final del día, todos fuimos inmigrantes.',hp:'Un lugar para encontrar tu rumbo, practicar un nuevo idioma y mantenerte conectado con la cultura que te hace ser tú.',go:'Ver recursos',start:'Tu punto de partida',c1:'Encuentra ayuda de inmigración',c2:'Practica inglés cotidiano',c3:'Encuentra tu comunidad',road:'Tu lista inicial',k1:'Explorar ayuda legal confiable',k2:'Completar una lección de inglés',k3:'Explorar un espacio comunitario',k4:'Leer la guía de privacidad',done:'completado',find:'Buscar conversaciones',newp:'+ Nueva conversación',untr:'Esta versión traduce la navegación y el panel. Las lecciones, el foro y las descripciones de recursos siguen en inglés. Para información de derechos, usa las versiones multilingües de las fuentes originales.'},
-ko:{n:'한국어',home:'대시보드',imm:'이민',lang:'언어 지원',com:'내 주변 커뮤니티',acc:'로그인 / 프로필',hh:'결국 우리도 모두 이민자였습니다.',hp:'발판을 마련하고, 새 언어를 연습하고, 나다운 문화와 계속 이어질 수 있는 공간입니다.',go:'자료 보기',start:'시작하기',c1:'이민 도움 찾기',c2:'실생활 영어 연습',c3:'커뮤니티 찾기',road:'시작 체크리스트',k1:'신뢰할 수 있는 법률 지원 살펴보기',k2:'영어 수업 완료하기',k3:'커뮤니티 공간 둘러보기',k4:'개인정보 안내 읽기',done:'완료',find:'토론 검색',newp:'+ 새 토론',untr:'이 버전은 메뉴와 대시보드만 번역되어 있습니다. 수업, 포럼, 자료 설명은 영어로 표시됩니다. 권리 관련 정보는 원출처의 다국어 자료를 이용하세요.'},
-zh:{n:'中文',home:'首页',imm:'移民',lang:'语言支持',com:'身边的社区',acc:'登录 / 个人资料',hh:'归根结底，我们都曾是移民。',hp:'一个帮你站稳脚跟、练习新语言，并与塑造你的文化保持联系的地方。',go:'查看资源',start:'从这里开始',c1:'寻找移民帮助',c2:'练习日常英语',c3:'找到你的社区',road:'入门清单',k1:'了解可靠的法律援助',k2:'完成一节英语课',k3:'探索一个社区空间',k4:'阅读隐私指南',done:'已完成',find:'搜索讨论',newp:'+ 发起讨论',untr:'此版本仅翻译了导航和首页。课程、论坛和资源说明仍为英文。权利相关信息请使用原始来源提供的多语言资料。'}};
+en:{n:'English',home:'My Timeline',imm:'Immigration',lang:'Language Support',com:'Communities Around You',circle:'Community Circle',acc:'Log In / Profile',hh:'At the end of the day, we were immigrants.',hp:'A place to find your footing, practice a new language, and stay connected to the culture that makes you, you.',go:'Explore resources',start:'Your starting point',c1:'Find immigration help',c2:'Practice everyday English',c3:'Find your community',road:'Your starter checklist',k1:'Explore trusted legal help',k2:'Complete an English lesson',k3:'Explore a community space',k4:'Read the privacy guidance',done:'complete',find:'Search discussions',newp:'+ New discussion',untr:''},
+es:{n:'Español',home:'Mi camino',imm:'Inmigración',lang:'Apoyo de idioma',com:'Comunidades cerca de ti',circle:'Círculo comunitario',acc:'Ingresar / Perfil',hh:'Al final del día, todos fuimos inmigrantes.',hp:'Un lugar para encontrar tu rumbo, practicar un nuevo idioma y mantenerte conectado con la cultura que te hace ser tú.',go:'Ver recursos',start:'Tu punto de partida',c1:'Encuentra ayuda de inmigración',c2:'Practica inglés cotidiano',c3:'Encuentra tu comunidad',road:'Tu lista inicial',k1:'Explorar ayuda legal confiable',k2:'Completar una lección de inglés',k3:'Explorar un espacio comunitario',k4:'Leer la guía de privacidad',done:'completado',find:'Buscar conversaciones',newp:'+ Nueva conversación',untr:'Algunas secciones, incluida la línea de tiempo personalizada, las lecciones, las conversaciones y las descripciones de recursos, permanecen en inglés. Para información de derechos, usa las versiones multilingües de las fuentes originales.'},
+ko:{n:'한국어',home:'내 타임라인',imm:'이민',lang:'언어 지원',com:'내 주변 커뮤니티',circle:'커뮤니티 이야기',acc:'로그인 / 프로필',hh:'결국 우리도 모두 이민자였습니다.',hp:'발판을 마련하고, 새 언어를 연습하고, 나다운 문화와 계속 이어질 수 있는 공간입니다.',go:'자료 보기',start:'시작하기',c1:'이민 도움 찾기',c2:'실생활 영어 연습',c3:'커뮤니티 찾기',road:'시작 체크리스트',k1:'신뢰할 수 있는 법률 지원 살펴보기',k2:'영어 수업 완료하기',k3:'커뮤니티 공간 둘러보기',k4:'개인정보 안내 읽기',done:'완료',find:'토론 검색',newp:'+ 새 토론',untr:'개인별 타임라인, 학습 콘텐츠, 커뮤니티 대화 및 자료 설명 등 일부 항목은 영어로 표시됩니다. 권리 관련 정보는 원출처의 다국어 자료를 이용하세요.'},
+zh:{n:'中文',home:'我的时间线',imm:'移民',lang:'语言支持',com:'身边的社区',circle:'社区交流圈',acc:'登录 / 个人资料',hh:'归根结底，我们都曾是移民。',hp:'一个帮你站稳脚跟、练习新语言，并与塑造你的文化保持联系的地方。',go:'查看资源',start:'从这里开始',c1:'寻找移民帮助',c2:'练习日常英语',c3:'找到你的社区',road:'入门清单',k1:'了解可靠的法律援助',k2:'完成一节英语课',k3:'探索一个社区空间',k4:'阅读隐私指南',done:'已完成',find:'搜索讨论',newp:'+ 发起讨论',untr:'部分内容（包括个性化时间线、课程、社区讨论和资源说明）仍以英文显示。权利相关信息请使用原始来源提供的多语言资料。'}};
 const X2={en:{ih:'Trusted information, one step at a time.',s1:'Immigration information & ICE resources',s2:'Local immigration support',s3:'Job opportunities',s4:'Cultural shops & restaurants',lh:'English for real life.',ch:'Your culture. Your community.',fh:'Community forum',hello:'Hello',rec:'Recommended resources',cont:'Continue learning'},
 es:{ih:'Información confiable, paso a paso.',s1:'Información migratoria y recursos sobre ICE',s2:'Apoyo migratorio local',s3:'Oportunidades de empleo',s4:'Tiendas y restaurantes culturales',lh:'Inglés para la vida real.',ch:'Tu cultura. Tu comunidad.',fh:'Foro comunitario',hello:'Hola',rec:'Recursos recomendados',cont:'Sigue aprendiendo'},
 ko:{ih:'믿을 수 있는 정보를 한 걸음씩.',s1:'이민 정보 및 ICE 관련 자료',s2:'지역 이민 지원',s3:'일자리 기회',s4:'문화 상점과 식당',lh:'실생활 영어',ch:'당신의 문화, 당신의 커뮤니티',fh:'커뮤니티 포럼',hello:'안녕하세요',rec:'추천 자료',cont:'계속 학습하기'},
 zh:{ih:'可靠的信息，一步一步来。',s1:'移民信息与 ICE 资源',s2:'本地移民支持',s3:'就业机会',s4:'文化商店与餐厅',lh:'现实生活中的英语',ch:'你的文化，你的社区',fh:'社区论坛',hello:'你好',rec:'推荐资源',cont:'继续学习'}};
 for(const k in X2)Object.assign(T[k],X2[k]);
-/* ===== STATE ===== */
-const S={page:'home',lang:'en',county:'',cult:'Korean',lv:'A1',cx:CX[0],pick:null,done:{},ld:{},saved:{},name:'',pref:'English',posts:[],rep:{},fl:'All',ft:'All',q:'',compose:false,err:'',toast:''};
-try{Object.assign(S,JSON.parse(localStorage.getItem('immily')||'{}').p||{})}catch(_){} // only non-sensitive prefs
-const save=()=>{try{localStorage.setItem('immily',JSON.stringify({p:{lang:S.lang,lv:S.lv,done:S.done,ld:S.ld,saved:S.saved,county:S.county}}))}catch(_){}};
+/* ===== APP STATE =====
+   S.page selects the top tab; S.langView selects the Language Support subpage.
+   User-selected goals, county, and learning progress personalize My Timeline.
+*/
+const S={page:'home',goal:'settle',langView:'lessons',lang:'en',county:'',cult:'Korean',lv:'A1',cx:CX[0],pick:null,done:{},ld:{},saved:{},name:'',pref:'English',posts:[],rep:{},fl:'All',ft:'All',q:'',compose:false,err:'',toast:''};
+// Keep existing non-sensitive preferences after the rename from Immily to Imminent.
+try{Object.assign(S,JSON.parse(localStorage.getItem('imminent')||localStorage.getItem('immily')||'{}').p||{})}catch(_){}
+const save=()=>{try{localStorage.setItem('imminent',JSON.stringify({p:{lang:S.lang,goal:S.goal,lv:S.lv,done:S.done,ld:S.ld,saved:S.saved,county:S.county}}))}catch(_){}};
 const t=k=>(T[S.lang]&&T[S.lang][k])||T.en[k]||'';
 const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const loc=()=>S.county.trim()||'your area';
@@ -105,60 +169,138 @@ const lesson=()=>{const a=LS[S.cx],i=LV.indexOf(S.lv);return a.length===6?a[i]:a
 const key=(c,v)=>{const i=LV.indexOf(v);return c+(LS[c].length===6?v:LV[(i>>1)*2])};
 const lk=()=>key(S.cx,S.lv);
 const nDone=()=>Object.values(S.done).filter(Boolean).length;
-/* ===== VIEWS ===== */
+/* ===== PAGE RENDERING: each function builds one page or UI section ===== */
 function resCard(r){const sv=S.saved[r.id];return `<div class="card"><span class="tag gr">${e(r.org)}</span><h3 style="margin-top:10px">${e(r.t)}</h3><p>${e(r.d)}</p><div class="row" style="gap:8px">${ext(r.u,'Open source','o')}<button class="btn o s" data-a="save" data-v="${r.id}" aria-pressed="${!!sv}">${sv?'★ Saved':'☆ Save'}</button></div></div>`}
-function home(){const n=nDone();return `<section class="hero"><div class="eb">Immily</div><h1>${e(t('hh'))}</h1><p>${e(t('hp'))}</p><button class="btn" data-a="nav" data-v="imm">${e(t('go'))} →</button></section>
-${t('untr')?`<div class="warn" style="margin-top:16px">${e(t('untr'))}</div>`:''}
-<h2>${e(t('start'))}</h2><div class="g g3">
-<div class="card"><h3>${e(t('c1'))}</h3><p>Trusted sources, legal-aid directories, and rights information.</p><button class="btn o" data-a="nav" data-v="imm">${e(t('imm'))} →</button></div>
-<div class="card"><h3>${e(t('c2'))}</h3><p>Real-life lessons by CEFR level, with audio and quizzes.</p><button class="btn o" data-a="nav" data-v="lang">${e(t('lang'))} →</button></div>
-<div class="card"><h3>${e(t('c3'))}</h3><p>Cultural spaces near you and a discussion forum (prototype).</p><button class="btn o" data-a="nav" data-v="com">${e(t('com'))} →</button></div></div>
-<div class="g g2" style="margin-top:16px"><section class="card"><div class="row" style="align-items:center"><h3 style="margin:0">${e(t('road'))}</h3><span class="tag">${n} / 4 ${e(t('done'))}</span></div><div class="bar" role="progressbar" aria-valuenow="${n}" aria-valuemin="0" aria-valuemax="4"><i style="width:${n*25}%"></i></div>
-${[['legal','k1'],['english','k2'],['community','k3'],['privacy','k4']].map(([i,k])=>`<label class="chk ${S.done[i]?'d':''}"><input type="checkbox" data-a="chk" data-v="${i}" ${S.done[i]?'checked':''}><span>${e(t(k))}</span></label>`).join('')}<p class="sm" style="margin:10px 0 0">General steps only. Immily does not know or track your immigration status or documents.</p></section>
-<section class="card"><div class="eb">Recommended next step</div><h3 style="margin-top:6px">${S.county?'Find community near '+e(S.county):'Set your county to personalize searches'}</h3><p>Immily uses only a county you type — never your GPS location. Most features work without an account.</p><button class="btn" data-a="nav" data-v="${S.county?'com':'imm'}">${S.county?'Explore communities':'Set my county'} →</button></section></div>
-<div class="card" style="margin-top:16px"><div class="row" style="align-items:center"><div><h3>${e(t('cont'))}</h3><p style="margin:0">${e(S.cx)} · ${S.lv} — ${Object.keys(S.ld).length} lessons completed</p></div><button class="btn" data-a="nav" data-v="lang" style="flex:none">${e(t('lang'))} →</button></div></div>
-<h2>${e(t('rec'))}</h2><div class="g g3">${['dir','scam','eng'].map(id=>resCard(RES.find(r=>r.id===id))).join('')}</div>`}
+/* Timeline goal labels and suggested, non-legal next steps.
+   These are optional learning tasks, NOT official immigration deadlines. */
+const GOALS={
+ settle:'Get settled in the U.S.',learn:'Build everyday English',work:'Prepare for work',belong:'Meet people & find community'
+};
+const PLAN={
+ settle:[
+ {id:'legal',title:'Explore trusted immigration resources',detail:'Start with nonprofit legal-help directories and know-your-rights guides.',page:'imm'},
+ {id:'county',title:'Find support in your area',detail:'Add a county and state to tailor community and local-service searches.',page:'imm'},
+ {id:'english',title:'Complete an everyday English lesson',detail:'Practice a real-life situation matched to your selected level.',page:'lang'},
+ {id:'community',title:'Discover a familiar community space',detail:'Explore cultural centers, markets, and gathering spaces in your area.',page:'com'},
+ {id:'circle',title:'Explore Community Circle',detail:'See questions and conversations from other newcomers.',page:'circle'}],
+ learn:[
+ {id:'level',title:'Choose your learning level',detail:'Select a starting level from A1 to C2. You can change it anytime.',page:'lang'},
+ {id:'english',title:'Finish a practical English lesson',detail:'Choose everyday, work, school, or healthcare conversations.',page:'lang'},
+ {id:'pron',title:'Practice a phrase out loud',detail:'Visit the Pronunciation Studio to listen, repeat, and compare at your pace.',page:'lang',sub:'pron'},
+ {id:'circle',title:'Share the learning journey',detail:'Find language-learning questions in Community Circle.',page:'circle'}],
+ work:[
+ {id:'jobs',title:'Explore work and training resources',detail:'Find official career services and job-search support.',page:'imm'},
+ {id:'interview',title:'Practice an interview conversation',detail:'Choose Job interviews under Language Support and finish a lesson.',page:'lang'},
+ {id:'county',title:'Add your county for nearby resources',detail:'Use a general county-level location, not a street address.',page:'imm'},
+ {id:'circle',title:'Learn from community conversations',detail:'Explore discussions about employment and getting settled.',page:'circle'}],
+ belong:[
+ {id:'county',title:'Find your local area',detail:'Add your county and state to make searches more relevant.',page:'com'},
+ {id:'community',title:'Discover cultural gathering spaces',detail:'Look for cultural centers, shops, and neighborhood events.',page:'com'},
+ {id:'circle',title:'Browse Community Circle',detail:'Explore shared experiences and ask questions in a welcoming space.',page:'circle'},
+ {id:'english',title:'Learn a social English phrase',detail:'Choose Social events under Language Support.',page:'lang'}]
+};
+const isDone=step=>{
+ if(step.id==='county')return !!S.county.trim();
+ if(step.id==='english')return Object.keys(S.ld).length>0;
+ if(step.id==='interview')return Object.keys(S.ld).some(k=>k.startsWith('Job interviews'));
+ if(step.id==='level')return !!S.done.level;
+ return !!S.done[step.id];
+};
+/* Home page: generates a personalized timeline from the selected goal,
+   English level, location, and completed learning tasks. */
+function home(){
+ const plan=PLAN[S.goal]||PLAN.settle,n=plan.filter(isDone).length,active=plan.findIndex(x=>!isDone(x));
+ return `<section class="timeline-intro"><div class="eb">Your personalized timeline</div>
+ <h1>Your journey, one step at a time.</h1>
+ <p class="lead">Choose what matters most to you. Imminent builds a flexible starting plan around your goals, English level, and general location — no immigration status or personal documents needed.</p>
+ <form class="personalize" data-f="personalize"><div class="row">
+ <div style="flex:2"><label for="goal">I'm here to...</label><select class="inp" name="goal" id="goal">${Object.entries(GOALS).map(([k,v])=>`<option value="${k}" ${S.goal===k?'selected':''}>${e(v)}</option>`).join('')}</select></div>
+ <div><label for="tllevel">My English level</label><select class="inp" name="lv" id="tllevel">${LV.map(v=>`<option ${S.lv===v?'selected':''}>${v}</option>`).join('')}</select></div>
+ <div style="flex:1.6"><label for="tlcounty">County and state (optional)</label><input class="inp" id="tlcounty" name="county" maxlength="80" value="${e(S.county)}" placeholder="e.g. Sacramento County, CA"></div>
+ <button class="btn">Update my timeline</button></div></form>
+ <div class="timeline-head"><div><h2>Your next steps</h2><span class="sm">${e(GOALS[S.goal]||GOALS.settle)}${S.county?' · '+e(S.county):''} · Level ${e(S.lv)}</span></div><span class="tag">${n} of ${plan.length} complete</span></div>
+ <div class="bar" role="progressbar" aria-label="Personalized journey progress" aria-valuenow="${n}" aria-valuemin="0" aria-valuemax="${plan.length}"><i style="width:${n/plan.length*100}%"></i></div>
+ <section class="journey" aria-label="Your timeline">${plan.map((step,i)=>{
+ const done=isDone(step),first=active===i;
+ return `<article class="mile ${done?'complete':''}"><div class="mile-num" aria-hidden="true">${done?'✓':i+1}</div><div class="mile-body"><h3>${e(step.title)}</h3><p>${e(step.detail)}</p><span class="mile-status">${done?'Completed':first?'Suggested next step':'On your timeline'}</span></div><div class="mile-actions"><button class="btn ${first?'':'o'} s" data-a="nav" data-v="${step.page}" ${step.sub?`data-sub="${step.sub}"`:''}>${done?'Revisit':first?'Start here':'Explore'} →</button>${!['county','english','interview','level'].includes(step.id)?`<button class="btn o s" data-a="tmark" data-v="${step.id}" aria-pressed="${done}">${done?'Undo completion':'Mark done'}</button>`:''}</div></article>`}).join('')}</section>
+ <p class="secure-tip">This is an optional learning and exploration timeline, not a legal-process timeline. Tasks can be revisited or marked complete at your pace. Your selections are saved locally in this browser.</p>
+ </section>
+ ${t('untr')?`<div class="warn" style="margin-top:16px">${e(t('untr'))}</div>`:''}
+ <h2>Explore Imminent</h2><div class="g g3">
+ <div class="card"><h3>Immigration resources</h3><p>Trusted third-party resources for legal help, employment, and settling in.</p><button class="btn o" data-a="nav" data-v="imm">Explore resources →</button></div>
+ <div class="card"><h3>Language Support</h3><p>Everyday lessons plus a dedicated Pronunciation Studio.</p><button class="btn o" data-a="nav" data-v="lang">Start learning →</button></div>
+ <div class="card"><h3>Communities & conversations</h3><p>Find cultural spaces nearby or discover Community Circle discussions.</p><button class="btn o" data-a="nav" data-v="circle">Meet Community Circle →</button></div></div>
+ <section class="hero" style="margin-top:20px"><div class="eb">Imminent</div><h1>${e(t('hh'))}</h1><p>${e(t('hp'))}</p></section>
+ <h2>${e(t('rec'))}</h2><div class="g g3">${['dir','scam','eng'].map(id=>resCard(RES.find(r=>r.id===id))).join('')}</div>`;
+}
 function imm(){const g=s=>RES.filter(r=>r.s===s).map(resCard).join('');const c=S.cult;return `<div class="eb">Immigration & settling in</div><h1>${e(t('ih'))}</h1><p class="lead">Links go to the organization named on each card. Last check of links: not yet done for this draft — re-verify before launch.</p>
-<div class="warn"><b>General education, not legal advice.</b> Immily cannot tell you about your case, eligibility, or what to file. For that, talk to a licensed attorney or DOJ-accredited representative. For rights materials in your language, use the translated versions on the source sites.</div>
+<div class="warn"><b>General education, not legal advice.</b> Imminent cannot tell you about your case, eligibility, or what to file. For that, talk to a licensed attorney or DOJ-accredited representative. For rights materials in your language, use the translated versions on the source sites.</div>
 <h2>${e(t('s1'))}</h2><div class="g g2">${g('legal')}</div>
-<h2>${e(t('s2'))}</h2><section class="card"><p>Enter a county and state. Immily has <b>no live local database</b> — it points you to a national directory you can filter by county.</p><form data-f="county" class="row"><div><label for="cty">County and state</label><input class="inp" id="cty" name="county" maxlength="80" value="${e(S.county)}" placeholder="e.g. Sacramento County, California"></div><button class="btn">Set location</button></form>
+<h2>${e(t('s2'))}</h2><section class="card"><p>Enter a county and state. Imminent has <b>no live local database</b> — it points you to a national directory you can filter by county.</p><form data-f="county" class="row"><div><label for="cty">County and state</label><input class="inp" id="cty" name="county" maxlength="80" value="${e(S.county)}" placeholder="e.g. Sacramento County, California"></div><button class="btn">Set location</button></form>
 <ol class="sm"><li>Open the Legal Services Directory.</li><li>Enter ${e(loc())} and choose the kind of help you need.</li><li>Confirm the provider is a nonprofit or DOJ-accredited before sharing documents.</li></ol><div class="row" style="gap:8px">${ext(RES[3].u,'Directory (verified national source)')}${ext('https://www.google.com/search?q='+encodeURIComponent('immigration legal services nonprofit '+loc()),'Web search (unverified results)','o')}</div></section>
 <h2>${e(t('s3'))}</h2><div class="g g2">${g('jobs')}</div><p class="sm">No live job listings are connected. Results come from the external sites above.</p>
 <h2>${e(t('s4'))}</h2><section class="card"><p>External map searches near ${e(loc())}. These are cultural/community-oriented searches — not verified or endorsed businesses.</p><div class="row"><div><label for="cu">Culture</label><select class="inp" id="cu" data-a="cult">${CULT.map(x=>`<option ${x===c?'selected':''}>${x}</option>`).join('')}</select></div></div><div class="row" style="gap:8px;margin-top:12px">${ext(map(c+' grocery market '+loc()),'Markets & groceries','o')}${ext(map(c+' restaurants '+loc()),'Restaurants','o')}${ext(map(c+' independent shops '+loc()),'Independent shops','o')}</div></section>`}
-function lang(){const l=lesson(),k=lk(),i=LV.indexOf(S.lv),tot=Object.values(LS).reduce((n,a)=>n+a.length,0),dn=Object.keys(S.ld).length;const p=S.pick;
+/* Language Support has its own navigation so pronunciation is a
+   dedicated subpage, rather than a section at the end of lessons. */
+function languageNav(){return `<nav class="subnav" aria-label="Language Support pages"><button data-a="sub" data-v="lessons" class="${S.langView==='lessons'?'on':''}" aria-current="${S.langView==='lessons'?'page':'false'}">Everyday lessons</button><button data-a="sub" data-v="pron" class="${S.langView==='pron'?'on':''}" aria-current="${S.langView==='pron'?'page':'false'}">Pronunciation Studio</button></nav>`}
+/* Standalone Pronunciation Studio subpage (browser audio demo). */
+function pron(){
+ const l=lesson();
+ return `<div class="eb">Language Support / Pronunciation Studio</div><h1>Practice being understood.</h1><p class="lead">Every accent is welcome. Listen, speak at your own pace, and compare your recording with the example. This is a separate learning space, not a speech-scoring tool.</p>
+ ${languageNav()}
+ <section class="card"><h3>Choose your practice phrase</h3><p>Select an English level and a real-life situation to change the phrase below.</p>
+ <div class="lv" role="group" aria-label="English level">${LV.map(v=>`<button data-a="lv" data-v="${v}" class="${v===S.lv?'on':''}" aria-pressed="${v===S.lv}">${v}</button>`).join('')}</div>
+ <div class="cx" role="group" aria-label="Situation">${CX.map(c=>`<button data-a="cx" data-v="${e(c)}" class="${c===S.cx?'on':''}">${e(c)}</button>`).join('')}</div></section>
+ <section class="card" style="margin-top:16px"><span class="tag">${e(S.cx)} · ${S.lv}</span><h3 style="margin-top:12px">${e(l[0])}</h3><div class="q">“${e(l[1])}”</div><p>Listen first, then repeat the phrase. Slowing down may help you notice individual words.</p>
+ <div class="row" style="gap:8px"><button class="btn" data-a="say" data-v="${e(l[1])}">▶ Listen</button><button class="btn o" data-a="say" data-v="${e(l[1])}" data-slow="1">▶ Slower</button><button class="btn o" data-a="rec">● Record yourself</button></div>
+ ${S.clip?`<div style="margin-top:15px"><label>Your recording</label><audio controls src="${e(S.clip)}" style="width:100%;max-width:430px"></audio></div>`:''}
+ <p class="sm" style="margin:14px 0">Microphone permission may be required. Recordings stay in your browser session; nothing is uploaded or automatically graded.</p>
+ <button class="btn o s" data-a="tmark" data-v="pron" aria-pressed="${!!S.done.pron}">${S.done.pron?'✓ Practice marked complete':'Mark practice complete'}</button>
+ </section><div class="foot">More free learning resources: ${ext(RES[7].u,'USAHello','o')}</div>`;
+}
+function lang(){if(S.langView==='pron')return pron();const l=lesson(),k=lk(),i=LV.indexOf(S.lv),tot=Object.values(LS).reduce((n,a)=>n+a.length,0),dn=Object.keys(S.ld).length;const p=S.pick;
 return `<div class="eb">Learn at your pace</div><h1>${e(t('lh'))}</h1><p class="lead">Practical phrases for everyday moments. Nine everyday situations. Some have three lessons (A1, B1, C1); other levels show the closest one.</p>
-<div class="card"><label>Your level (browsing only — not an assessment)</label><div class="lv" role="group">${LV.map(v=>`<button data-a="lv" data-v="${v}" class="${v===S.lv?'on':''} ${S.ld[key(S.cx,v)]?'dn':''}" aria-pressed="${v===S.lv}">${v}</button>`).join('')}</div>
+${languageNav()}<div class="card"><label>Your level (browsing only — not an assessment)</label><div class="lv" role="group">${LV.map(v=>`<button data-a="lv" data-v="${v}" class="${v===S.lv?'on':''} ${S.ld[key(S.cx,v)]?'dn':''}" aria-pressed="${v===S.lv}">${v}</button>`).join('')}</div>
 <div class="cx" role="group">${CX.map(c=>`<button data-a="cx" data-v="${e(c)}" class="${c===S.cx?'on':''}">${e(c)}</button>`).join('')}</div>
 <div class="bar"><i style="width:${dn/tot*100}%"></i></div><span class="sm">${dn} of ${tot} lessons completed</span></div>
 <div class="g g2" style="margin-top:16px"><section class="card"><span class="tag">${e(S.cx)} · ${S.lv}</span>${LS[S.cx].length<6&&!'A1B1C1'.includes(S.lv)?' <span class="tag gr">closest available lesson</span>':''}<h3 style="margin-top:10px">${e(l[0])}</h3><div class="q">“${e(l[1])}”</div><button class="btn" data-a="say" data-v="${e(l[1])}">▶ Listen</button>
 <h3 style="margin-top:16px">Vocabulary</h3><p>${e(l[6])}</p><h3>Why it works</h3><p>${e(l[7])}</p></section>
 <section class="card"><div class="eb">Quick check</div><h3 style="margin-top:6px">${e(l[2])}</h3>${l[3].map((c,j)=>`<button class="opt ${p===null?'':j===l[4]?'c':j===p?'w':''}" data-a="pick" data-v="${j}" ${p!==null?'aria-disabled="true"':''}>${e(c)}${p!==null&&j===l[4]?' ✓':''}</button>`).join('')}
 ${p!==null?`<div class="${p===l[4]?'ok':'warn'}" role="status" style="margin-top:10px"><b>${p===l[4]?'Correct!':'Not quite.'}</b> ${e(l[5])}</div><div class="row" style="gap:8px;margin-top:10px"><button class="btn o s" data-a="pick" data-v="-1">Try again</button>${i<5?`<button class="btn s" data-a="lv" data-v="${LV[i+1]}">Next lesson →</button>`:''}</div>`:''}</section></div>
-<h2>Pronunciation practice <span class="tag gr">Demonstration</span></h2><section class="card"><p>The goal is to be understood — every accent is welcome. Listen to the phrase, say it aloud at your own pace, and listen again. <b>No microphone analysis is connected:</b> this feature cannot score your speech.</p><button class="btn o" data-a="say" data-v="${e(l[1])}">▶ Listen again</button> <button class="btn o" data-a="say" data-v="${e(l[1])}" data-slow="1">▶ Slower</button> <button class="btn o" data-a="rec">● Record yourself</button>${S.clip?`<audio controls src="${S.clip}" style="display:block;margin-top:12px"></audio>`:''}<p class="sm" style="margin:10px 0 0">Recordings stay in your browser for you to compare by ear; nothing is uploaded or scored.</p></section>
-<div class="foot">More free lessons: ${ext(RES[7].u,'USAHello','o')}</div>`}
+<div class="section-cta"><h3>Want to practice speaking?</h3><p>Open Pronunciation Studio for a separate, focused practice page.</p><button class="btn" data-a="sub" data-v="pron">Go to Pronunciation Studio →</button></div>
+ <div class="foot">More free lessons: ${ext(RES[7].u,'USAHello','o')}</div>`}
 function fitems(){const q=S.q.trim().toLowerCase();const a=[...S.posts,...POSTS].filter(p=>(S.fl==='All'||p.l===S.fl)&&(S.ft==='All'||p.t===S.ft)&&(!q||(p.h+' '+p.b).toLowerCase().includes(q)));
 return a.length?a.map((p,j)=>`<article class="fi"><div class="meta"><span class="tag ${p.my?'':'gr'}">${p.my?'Your post (this session)':'Illustrative sample'}</span><span>${e(p.t)} · ${e(p.l)}</span></div><h3>${e(p.h)}</h3><p style="margin:0 0 8px;color:var(--mut)">${S.rep[p.h]?'<i>Hidden pending moderator review (demo).</i>':e(p.b)}</p><div class="meta">By ${e(p.a)} <button class="btn o s" data-a="report" data-v="${e(p.h)}" ${S.rep[p.h]?'disabled':''}>${S.rep[p.h]?'Reported (demo)':'⚑ Report (demo)'}</button></div></article>`).join(''):'<p class="sm" style="padding:16px 0">No discussions match. Try other filters.</p>'}
-function com(){const c=S.cult;return `<div class="eb">Belong wherever you are</div><h1>${e(t('ch'))}</h1><p class="lead">Find familiar places through external map searches. Immily does not list or verify businesses or events.</p>
+function com(){const c=S.cult;return `<div class="eb">Belong wherever you are</div><h1>${e(t('ch'))}</h1><p class="lead">Find familiar places through external map searches. Imminent does not list or verify businesses or events.</p>
 <section class="card"><form data-f="cloc" class="row"><div><label for="cu2">Community</label><select class="inp" id="cu2" name="cult">${CULT.map(x=>`<option ${x===c?'selected':''}>${x}</option>`).join('')}</select></div><div><label for="ct2">County and state</label><input class="inp" id="ct2" name="county" maxlength="80" value="${e(S.county)}" placeholder="e.g. King County, Washington"></div><button class="btn">Update</button></form></section>
 <div class="g g3" style="margin-top:16px">${[['Churches & religious centers',c+' church temple mosque '+loc()],['Cultural organizations & community centers',c+' cultural community center '+loc()],['Grocery stores & markets',c+' grocery market '+loc()],['Restaurants',c+' restaurant '+loc()]].map(([h,q])=>`<div class="card"><h3>${h}</h3><p>${e(c)}, near ${e(loc())}.</p>${ext(map(q),'Search maps','o')}</div>`).join('')}<div class="card"><h3>Festivals & events</h3><p>Check each organizer's site before attending.</p>${ext('https://www.google.com/search?q='+encodeURIComponent(c+' cultural festival events '+loc()),'Search events','o')}</div></div>
+`}
+/* Community Circle: separate discussion page. Demo posts only;
+   production posting requires accounts, storage, and active moderation. */
+function circle(){return `<div class="eb">Community Circle</div><h1>A place to ask, share, and connect.</h1><p class="lead">Find conversations about everyday life, language learning, housing, and new beginnings. This is a demonstration space; real community posts and moderation are not connected.</p>
 <h2>${e(t('fh'))} <span class="tag gr">Prototype</span></h2><section class="card"><div class="warn" style="margin-bottom:14px"><b>Guidelines:</b> Be kind. Never post names of others, addresses, ID or case numbers, or legal documents. Do not share immigration case details. Posts here exist only in this browser tab and are not stored on a server. Reporting is a demo; a real launch needs moderators.</div>
 <div class="row"><div style="flex:2"><label for="fq">${e(t('find'))}</label><input class="inp" id="fq" data-a="q" value="${e(S.q)}"></div><div><label for="fl">Language</label><select class="inp" id="fl" data-a="fl">${['All',...LANGS].map(x=>`<option ${x===S.fl?'selected':''}>${x}</option>`).join('')}</select></div><div><label for="ft">Topic</label><select class="inp" id="ft" data-a="ft">${['All',...TOPICS].map(x=>`<option ${x===S.ft?'selected':''}>${x}</option>`).join('')}</select></div><button class="btn" data-a="compose">${e(t('newp'))}</button></div>
 ${S.compose?(S.name?`<form data-f="post" style="margin-top:14px"><label for="ph">Title</label><input class="inp" id="ph" name="h" maxlength="110" required><label for="pb" style="margin-top:10px">Post</label><textarea class="inp" id="pb" name="b" maxlength="800" rows="4" required></textarea><div class="row" style="margin-top:10px"><div><label for="pl">Language</label><select class="inp" id="pl" name="l">${LANGS.map(x=>`<option ${x===S.pref?'selected':''}>${x}</option>`).join('')}</select></div><div><label for="pt">Topic</label><select class="inp" id="pt" name="t">${TOPICS.map(x=>`<option>${x}</option>`).join('')}</select></div><button class="btn">Post (demo)</button></div>${S.err?`<div class="warn" role="alert" style="margin-top:10px">${e(S.err)}</div>`:''}</form>`:`<div class="warn" style="margin-top:14px">Create a demo profile to post. <button class="btn s" data-a="nav" data-v="acc">Go to profile →</button></div>`):''}
 <div id="fl-list" style="margin-top:8px">${fitems()}</div></section>`}
-function acc(){const sv=RES.filter(r=>S.saved[r.id]);return `<div class="eb">Your space</div><h1>${S.name?e(t('hello'))+', '+e(S.name):e(t('acc'))}</h1><p class="lead"><b>Demo profile only</b> — not a secure account. No password or server; nothing here is stored permanently. You only need a profile to post in the forum.</p>
+function acc(){const sv=RES.filter(r=>S.saved[r.id]);return `<div class="eb">Your space</div><h1>${S.name?e(t('hello'))+', '+e(S.name):e(t('acc'))}</h1><p class="lead"><b>Demo profile only</b> — not a secure account. No password or server; nothing here is stored permanently. You only need a demo profile to post in Community Circle.</p>
 <div class="g g2"><section class="card"><form data-f="acct"><label for="nm">Display name (a nickname is fine)</label><input class="inp" id="nm" name="name" minlength="2" maxlength="30" required value="${e(S.name)}" autocomplete="off"><label for="pf" style="margin-top:10px">Preferred language</label><select class="inp" id="pf" name="pref">${LANGS.map(x=>`<option ${x===S.pref?'selected':''}>${x}</option>`).join('')}</select><label for="pc" style="margin-top:10px">County (general location)</label><input class="inp" id="pc" name="county" maxlength="80" value="${e(S.county)}"><label for="pv" style="margin-top:10px">English level</label><select class="inp" id="pv" name="lv">${LV.map(x=>`<option ${x===S.lv?'selected':''}>${x}</option>`).join('')}</select><div style="margin-top:14px"><button class="btn">${S.name?'Save profile':'Continue with demo profile'}</button> ${S.name?'<button type="button" class="btn o" data-a="out">Sign out</button>':''}</div></form></section>
-<section class="card"><h3>Privacy first</h3><div class="ok">Immily never asks for immigration status, passport or A-numbers, or legal documents. Only a display name, language, level and broad location are used.</div><h3 style="margin-top:16px">Saved resources (${sv.length})</h3>${sv.length?sv.map(r=>`<p style="margin:6px 0">${ext(r.u,r.t,'o s')}</p>`).join(''):'<p class="sm">Nothing saved yet. Use ☆ Save on resource cards.</p>'}<h3>Learning progress</h3><p>${Object.keys(S.ld).length} lessons completed</p></section></div>`}
-function render(){const V={home,imm,lang,com,acc},N=[['home','⌂'],['imm','▤'],['lang','◉'],['com','♧'],['acc','♙']];
+<section class="card"><h3>Privacy first</h3><div class="ok">Imminent never asks for immigration status, passport or A-numbers, or legal documents. Only a display name, language, level and broad location are used.</div><h3 style="margin-top:16px">Saved resources (${sv.length})</h3>${sv.length?sv.map(r=>`<p style="margin:6px 0">${ext(r.u,r.t,'o s')}</p>`).join(''):'<p class="sm">Nothing saved yet. Use ☆ Save on resource cards.</p>'}<h3>Learning progress</h3><p>${Object.keys(S.ld).length} lessons completed</p></section></div>`}
+/* Builds the shared header and the active top-level page.
+   Keep the six entries in N in sync with the translated navigation labels. */
+function render(){const V={home,imm,lang,com,circle,acc},N=[['home','⌂'],['imm','▤'],['lang','◉'],['com','♧'],['circle','◎'],['acc','♙']];
 document.documentElement.lang=S.lang;document.body.style.fontSize=S.big?'18px':'';
-$('#app').innerHTML=`<a class="skip" href="#main">Skip to content</a><div class="app"><aside class="side"><div class="brand"><span class="mark" aria-hidden="true">✳</span>immily</div><nav class="nav" aria-label="Main">${N.map(([k,i])=>`<button data-a="nav" data-v="${k}" class="${S.page===k?'on':''}" ${S.page===k?'aria-current="page"':''}><span aria-hidden="true">${i}</span><span>${e(t(k))}</span></button>`).join('')}</nav><div class="note"><b>Prototype.</b> No backend, live listings or real accounts are connected.</div></aside>
-<main class="main" id="main" tabindex="-1"><div class="top"><span class="pill">Interactive prototype</span><button class="pill" data-a="big" aria-pressed="${!!S.big}">A+ Larger text</button><label class="sm" style="margin:0">🌐 <select data-a="L" aria-label="Language">${Object.keys(T).map(k=>`<option value="${k}" ${k===S.lang?'selected':''}>${T[k].n}</option>`).join('')}</select></label></div><div class="wrap">${S.page!=='home'&&t('untr')?`<div class="warn" style="margin-bottom:14px">${e(t('untr'))}</div>`:''}${S.toast?`<div class="ok" role="status" style="margin-bottom:14px">${e(S.toast)} <button class="btn o s" data-a="x">Dismiss</button></div>`:''}${V[S.page]()}<div class="foot">Immily is an educational prototype, not immigration or legal advice. Sample content is labeled illustrative.</div></div></main></div>`}
+$('#app').innerHTML=`<a class="skip" href="#main">Skip to content</a><div class="app"><header class="side"><div class="brand"><span class="mark" aria-hidden="true">✳</span>imminent</div><nav class="nav" aria-label="Main">${N.map(([k,i])=>`<button data-a="nav" data-v="${k}" class="${S.page===k?'on':''}" ${S.page===k?'aria-current="page"':''}><span aria-hidden="true">${i}</span><span>${e(t(k))}</span></button>`).join('')}</nav></header>
+<main class="main" id="main" tabindex="-1"><div class="top"><span class="pill">Interactive prototype</span><button class="pill" data-a="big" aria-pressed="${!!S.big}">A+ Larger text</button><label class="sm" style="margin:0">🌐 <select data-a="L" aria-label="Language">${Object.keys(T).map(k=>`<option value="${k}" ${k===S.lang?'selected':''}>${T[k].n}</option>`).join('')}</select></label></div><div class="wrap">${S.page!=='home'&&t('untr')?`<div class="warn" style="margin-bottom:14px">${e(t('untr'))}</div>`:''}${S.toast?`<div class="ok" role="status" style="margin-bottom:14px">${e(S.toast)} <button class="btn o s" data-a="x">Dismiss</button></div>`:''}${V[S.page]()}<div class="foot">Imminent is an educational prototype, not immigration or legal advice. Sample content is labeled illustrative.</div></div></main></div>`}
 const $=s=>document.querySelector(s);
-const go=(p)=>{S.page=p;S.toast='';S.err='';render();scrollTo(0,0)};
+const go=(p,sub)=>{S.page=p;if(p==='lang')S.langView=sub||'lessons';S.toast='';S.err='';render();scrollTo(0,0)};
 const toast=m=>{S.toast=m;render()};
-/* ===== EVENTS ===== */
+/* ===== USER INTERACTIONS =====
+   Click handlers control navigation, timeline completion, lessons, and demo posts.
+   Form handlers update settings and basic non-sensitive local preferences.
+*/
 let rec,chunks=[];
 document.addEventListener('click',ev=>{const el=ev.target.closest('[data-a]');if(!el||el.tagName==='SELECT'||el.tagName==='INPUT'&&el.type!=='checkbox')return;const a=el.dataset.a,v=el.dataset.v;
-if(a==='nav')go(v);else if(a==='lv'){S.lv=v;S.pick=null;save();render()}else if(a==='cx'){S.cx=v;S.pick=null;render()}
+if(a==='nav')go(v,el.dataset.sub);else if(a==='sub'){S.langView=v;render();scrollTo(0,0)}else if(a==='tmark'){S.done[v]=!S.done[v];save();render()}else if(a==='lv'){S.lv=v;S.done.level=true;S.pick=null;save();render()}else if(a==='cx'){S.cx=v;S.pick=null;render()}
 else if(a==='pick'){if(+v===-1)S.pick=null;else if(S.pick===null){S.pick=+v;if(S.pick===lesson()[4]){S.ld[lk()]=1;S.done.english=true;save()}}render()}
 else if(a==='say'){if('speechSynthesis'in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(v);u.lang='en-US';u.rate=el.dataset.slow?.6:.9;speechSynthesis.speak(u)}else toast('Audio is not supported in this browser.')}
 else if(a==='save'){S.saved[v]=!S.saved[v];save();render()}else if(a==='compose'){S.compose=!S.compose;S.err='';render()}
@@ -172,9 +314,10 @@ else if(a==='fl'){S.fl=el.value;$('#fl-list').innerHTML=fitems()}else if(a==='ft
 document.addEventListener('input',ev=>{if(ev.target.dataset.a==='q'){S.q=ev.target.value;$('#fl-list').innerHTML=fitems()}});
 const PII=/\b[aA][-\s]?\d{8,9}\b|\b\d{3}-\d{2}-\d{4}\b|[\w.+-]+@[\w-]+\.\w+|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b|passport|alien registration|receipt number|case number/i;
 document.addEventListener('submit',ev=>{const f=ev.target.dataset.f;if(!f)return;ev.preventDefault();const d=Object.fromEntries(new FormData(ev.target));
-if(f==='county'){S.county=(d.county||'').trim().slice(0,80);save();toast(S.county?'Area set to '+S.county:'Area cleared.')}
+if(f==='personalize'){S.goal=Object.prototype.hasOwnProperty.call(GOALS,d.goal)?d.goal:'settle';S.lv=LV.includes(d.lv)?d.lv:'A1';S.done.level=true;S.county=(d.county||'').trim().slice(0,80);save();toast('Your timeline has been updated.')}
+ else if(f==='county'){S.county=(d.county||'').trim().slice(0,80);save();toast(S.county?'Area set to '+S.county:'Area cleared.')}
 else if(f==='cloc'){S.county=(d.county||'').trim().slice(0,80);S.cult=d.cult;S.done.community=true;save();toast('Search updated.')}
-else if(f==='acct'){const n=(d.name||'').trim();if(n.length<2||PII.test(n)){return toast('Please enter a nickname (2+ characters, no personal identifiers).')}S.name=n.slice(0,30);S.pref=d.pref;S.county=(d.county||'').trim().slice(0,80);S.lv=d.lv;save();toast('Demo profile saved for this session only.')}
+else if(f==='acct'){const n=(d.name||'').trim();if(n.length<2||PII.test(n)){return toast('Please enter a nickname (2+ characters, no personal identifiers).')}S.name=n.slice(0,30);S.pref=d.pref;S.county=(d.county||'').trim().slice(0,80);S.lv=d.lv;S.done.level=true;save();toast('Demo profile saved for this session only.')}
 else if(f==='post'){const h=(d.h||'').trim(),b=(d.b||'').trim();if(h.length<5||b.length<10){S.err='Please add a title (5+ characters) and a post (10+ characters).';return render()}
 if(PII.test(h+' '+b)){S.err='This looks like it may include private information (such as an email, phone, ID or case number). Please remove it and post again.';return render()}
 S.posts.unshift({a:S.name,l:d.l,t:d.t,h,b,my:1});S.compose=false;S.err='';toast('Posted to this demo session only.')}});
