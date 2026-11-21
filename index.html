@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  Imminent - single-file website prototype
+  Imminent - browser-based website prototype
   Main website file: index.html
 
   Site structure:
@@ -20,8 +20,9 @@
 -->
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#fcfaf8">
-<title>Imminent — Your personalized journey</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7f5f0">
+<meta name="description" content="Imminent helps newcomers find trusted starting points, practice everyday English, and discover community resources.">
+<title>Imminent — Newcomer support and resources</title>
 <style>
 /* ===== BASE STYLES: shared layout, text, buttons, and cards ===== */
 :root{--ink:#38231b;--mut:#6f645d;--o:#fa8128;--od:#c4491a;--bd:#f0e7df;--wash:#fff7f0;--br:#893101;--g:#2b6b55}
@@ -137,7 +138,9 @@ body{font-size:16px}
 .home-links .card p{margin:8px 0}.home-icon{display:inline-grid;place-items:center;width:34px;height:34px;margin-bottom:9px;border-radius:11px;background:#fff1e6;color:#8a3a10;font-size:19px}
 .home-links .sm{color:#8a3a10;font-weight:800}
 @media(max-width:620px){.side{position:sticky;display:grid;grid-template-columns:1fr auto 1fr;flex-wrap:nowrap;min-height:68px;padding:9px 12px}.brand{display:flex;margin:0;font-size:19px}.brand .mark{width:32px;height:32px;font-size:19px}.menu-toggle,.profile-toggle{gap:5px;padding:8px 0;font-size:12px}.side .nav{width:min(320px,88vw);height:100vh;height:100dvh;padding:18px 14px}.side .nav button{justify-content:flex-start;min-width:0}.home-welcome{align-items:flex-start;flex-direction:column}.home-progress{align-items:flex-start;flex-direction:column}.home-progress-side{width:100%}.top{align-items:flex-start}}
-</style></head>
+</style>
+<link rel="stylesheet" href="design-system.css">
+</head>
 <body><div id="app"></div>
 <script>
 (()=>{'use strict';
@@ -194,7 +197,7 @@ for(const k in X2)Object.assign(T[k],X2[k]);
    S.page selects the top tab; S.langView selects the Language Support subpage.
    User-selected goals, county, and learning progress personalize My Timeline.
 */
-const S={page:'home',menuOpen:false,goal:'settle',langView:'lessons',lang:'en',county:'',cult:'Korean',lv:'A1',cx:CX[0],pick:null,done:{},ld:{},saved:{},name:'',pref:'English',posts:[],rep:{},fl:'All',ft:'All',q:'',compose:false,err:'',toast:'',journey:{},customTasks:[],openTask:'',rfCounty:'',rfLanguage:'All languages',rfCategory:'All services',storageIssue:''};
+const S={page:'home',menuOpen:false,goal:'settle',langView:'lessons',lang:'en',county:'',cult:'Korean',communityCategory:'all',communityLanguage:'All languages',immQuery:'',immCategory:'all',lv:'A1',cx:CX[0],pick:null,done:{},ld:{},saved:{},name:'',pref:'English',posts:[],rep:{},fl:'All',ft:'All',q:'',compose:false,err:'',toast:'',journey:{},customTasks:[],openTask:'',rfCounty:'',rfLanguage:'All languages',rfCategory:'All services',storageIssue:''};
 // Keep existing non-sensitive preferences after the product rename.
 try{Object.assign(S,JSON.parse(localStorage.getItem('imminent')||localStorage.getItem('immily')||'{}').p||{})}catch(err){S.storageIssue='Saved information could not be loaded from this browser.';console.warn('Imminent local data could not be loaded.',err)}
 const save=()=>{try{localStorage.setItem('imminent',JSON.stringify({p:{lang:S.lang,goal:S.goal,lv:S.lv,done:S.done,ld:S.ld,saved:S.saved,county:S.county,journey:S.journey,customTasks:S.customTasks,rfCounty:S.rfCounty,rfLanguage:S.rfLanguage,rfCategory:S.rfCategory}}));S.storageIssue=''}catch(err){S.storageIssue='Changes could not be saved in this browser. They may be lost when you leave this page.';console.warn('Imminent local data could not be saved.',err)}const warning=document.querySelector('[data-storage-warning]');if(warning){warning.textContent=S.storageIssue;warning.style.display=S.storageIssue?'block':'none'}};
@@ -211,7 +214,29 @@ const key=(c,v)=>{const i=LV.indexOf(v);return c+(LS[c].length===6?v:LV[(i>>1)*2
 const lk=()=>key(S.cx,S.lv);
 const nDone=()=>Object.values(S.done).filter(Boolean).length;
 /* ===== PAGE RENDERING: each function builds one page or UI section ===== */
-function resCard(r){const sv=S.saved[r.id];return `<div class="card"><span class="tag gr">${e(r.org)}</span><h3 style="margin-top:10px">${e(r.t)}</h3><p>${e(r.d)}</p><div class="row" style="gap:8px">${ext(r.u,'Open source','o')}<button class="btn o s" data-a="save" data-v="${r.id}" aria-pressed="${!!sv}">${sv?'★ Saved':'☆ Save'}</button></div></div>`}
+function resCard(r){
+ const sv=S.saved[r.id],category=r.s==='legal'?'Legal help':'Work & learning';
+ const sourceType=/^(USCIS|U\.S\.)|U\.S\. Department/.test(r.org)?'Government source':'Nonprofit resource';
+ return `<article class="card resource-card" data-resource-card data-resource-category="${e(r.s)}"><span class="tag">${e(category)}</span><div class="meta"><span>${e(r.org)}</span><span class="tag gr">${e(sourceType)}</span></div><h3>${e(r.t)}</h3><p>${e(r.d)}</p><div class="row" style="gap:8px">${ext(r.u,'Open source','o')}<button class="btn o s" data-a="save" data-v="${e(r.id)}" aria-pressed="${!!sv}">${sv?'★ Saved':'☆ Save'}</button></div></article>`;
+}
+function applyImmigrationFilters(){
+ const query=S.immQuery.trim().toLocaleLowerCase(),category=S.immCategory;
+ let count=0,total=0;
+ document.querySelectorAll('[data-resource-card]').forEach(card=>{
+  total++;
+  const matchesCategory=category==='all'||card.dataset.resourceCategory===category;
+  const matchesQuery=!query||card.textContent.toLocaleLowerCase().includes(query);
+  card.hidden=!(matchesCategory&&matchesQuery);
+  if(!card.hidden)count++;
+ });
+ document.querySelectorAll('[data-resource-group]').forEach(group=>{
+  group.hidden=!group.querySelector('[data-resource-card]:not([hidden])');
+ });
+ const status=document.querySelector('[data-resource-count]');
+ if(status)status.textContent=`Showing ${count} of ${total} resources`;
+ const empty=document.querySelector('[data-resource-empty]');
+ if(empty)empty.hidden=count>0;
+}
 /* Timeline goal labels and suggested, non-legal next steps.
    These are optional learning tasks, NOT official immigration deadlines. */
 const GOALS={
@@ -351,11 +376,11 @@ function resourceFinder(){
 function journeyLanguageNote(){const copy={es:'Esta guía del recorrido está actualmente en inglés. Pregunta a una organización local si ofrece interpretación. Para información importante, consulta la fuente oficial en tu idioma. Imminent no ofrece asesoría legal.',ko:'이 여정 안내는 현재 영어로 제공됩니다. 지역 단체에 통역 지원이 있는지 문의하세요. 중요한 정보는 공식 출처의 해당 언어 자료를 확인하세요. Imminent는 법률 자문을 제공하지 않습니다.',zh:'本旅程指南目前为英文。可向当地机构询问是否提供口译服务。重要信息请查看官方来源的对应语言资料。Imminent 不提供法律建议。'};return S.lang==='en'?'':`<div class="warn" role="note">${e(copy[S.lang]||'This journey guide is currently in English. Ask a local organization whether interpretation is available.')}</div>`}
 function personalTasksView(){return S.customTasks.map(task=>journeyTaskCard(task)).join('')}
 function journey(){
-  const progress=journeyProgress(),next=nextJourneyTask(),active=activeTasks();
+  const progress=journeyProgress(),next=nextJourneyTask(),active=activeTasks(),currentStage=next?stageForTask(next.id).id:null;
   return `${journeyLanguageNote()}<div class="eb">A flexible guide for settling into life in the United States</div><h1>My U.S. Journey</h1><p class="lead">Choose the steps that fit your life right now. Stages are suggestions, not rules. Skip what does not apply, return whenever you need, and open a task for practical guidance and support.</p>
 <div class="journey-hero"><div><h2>Your journey, your pace</h2><p>Each task includes simple steps, trusted starting points, and ways to look for another path if you get stuck. You do not need to share immigration status or document numbers here.</p><div class="journey-actions">${next?`<button class="btn" data-a="openTask" data-taskid="${e(next.id)}">Continue to: ${e(next.title)} →</button>`:'<span class="tag gr">No unfinished active tasks. Review completed or skipped tasks.</span>'}<button class="btn o" data-a="scrollTo" data-target="resource-finder">Find local support</button></div></div><div class="journey-score"><span class="sm">Overall journey progress</span><div><strong>${progress.percent}%</strong> <span class="sm">${progress.completed} of ${progress.total} active tasks complete</span></div><div class="bar" role="progressbar" aria-label="Overall journey completion" aria-valuenow="${progress.percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${progress.percent}%"></i></div><span class="sm">Skipped tasks are excluded. Your progress is saved on this device only.</span></div></div>
 <div class="warn" style="margin-bottom:20px"><b>Privacy and prototype limits:</b> Progress, dates, and notes are stored in this browser only. They are not sent to a server and may be lost if browser storage is cleared or unavailable. Avoid entering sensitive immigration or identity information.</div>
-<div class="eb">Milestones and practical next steps</div>${JOURNEY.map((stage,index)=>{const stats=stageProgress(stage);return `<section class="stage" aria-labelledby="stage-${e(stage.id)}"><span class="stage-node" aria-hidden="true">${index+1}</span><div class="stage-head"><div><h2 id="stage-${e(stage.id)}">Stage ${index+1}: ${e(stage.title)}</h2><p>${e(stage.summary)}</p></div><span class="tag">${stats.completed}/${stats.total} complete</span></div><div class="stage-tasks">${stage.tasks.map(task=>journeyTaskCard(task)).join('')}</div></section>`}).join('')}
+<div class="eb">Milestones and practical next steps</div>${JOURNEY.map((stage,index)=>{const stats=stageProgress(stage),isCurrent=stage.id===currentStage,isComplete=stats.total>0&&stats.completed===stats.total;return `<section class="stage ${isCurrent?'is-current':''}" aria-labelledby="stage-${e(stage.id)}"><span class="stage-node" aria-hidden="true">${isComplete?'✓':index+1}</span><div class="stage-head"><div><h2 id="stage-${e(stage.id)}">Stage ${index+1}: ${e(stage.title)}</h2><p>${e(stage.summary)}</p></div><span class="tag ${isComplete?'ok':isCurrent?'':'gr'}">${isComplete?'Stage complete':isCurrent?'Current stage':'Upcoming stage'} · ${stats.completed} of ${stats.total} tasks</span></div><div class="stage-tasks">${stage.tasks.map(task=>journeyTaskCard(task)).join('')}</div></section>`}).join('')}
 <section class="stage"><span class="stage-node" aria-hidden="true">+</span><div class="stage-head"><div><h2>My personal tasks</h2><p>Add steps that matter to your own situation. Personal tasks are private to this browser.</p></div></div><div class="stage-tasks">${personalTasksView()||'<div class="empty-state">No personal tasks yet. Add one when you are ready.</div>'}<form class="card" data-f="personalTask"><label for="new-task-title">Your task</label><input class="inp" id="new-task-title" name="title" maxlength="100" required placeholder="e.g. Ask the library about computer access"><label for="new-task-notes" style="margin-top:10px">A short note (optional)</label><input class="inp" id="new-task-notes" name="notes" maxlength="240" placeholder="What would help you get started?"><button class="btn" style="margin-top:12px">Add personal task</button></form></div></section>
 ${resourceFinder()}</div>`;
 }
@@ -377,23 +402,33 @@ function timeline(){
  <p class="secure-tip">This is an optional learning and exploration timeline, not a legal-process timeline. Tasks can be revisited or marked complete at your pace. Your selections are saved locally in this browser.</p>
  </section>`;
 }
-function home(){const progress=journeyProgress(),next=nextJourneyTask();return `<section class="hero home-hero"><div class="eb">A fresh start, at your pace</div><h1>${e(t('hh'))}</h1><p>${e(t('hp'))}</p><div class="home-actions"><button class="btn" data-a="nav" data-v="timeline">Explore my timeline →</button><button class="btn o" data-a="nav" data-v="journey">Open my journey</button></div></section>
-<div class="home-welcome"><div><div class="eb">Welcome to Imminent</div><h2>Find your next step—not everything at once.</h2><p class="lead">Choose a place to begin. Your timeline and journey are ready whenever you want them.</p></div><button class="btn o" data-a="nav" data-v="timeline">View My Timeline →</button></div>
-<h2>Explore</h2><div class="g g3 home-links">
-<button class="card" data-a="nav" data-v="imm"><span class="home-icon" aria-hidden="true">▤</span><h3>Immigration support</h3><p>Trusted starting points for legal help and local services.</p><span class="sm">Explore resources →</span></button>
-<button class="card" data-a="nav" data-v="ice"><span class="home-icon" aria-hidden="true">ⓘ</span><h3>ICE information</h3><p>Official information and independent rights resources in one place.</p><span class="sm">Open ICE page →</span></button>
-<button class="card" data-a="nav" data-v="lang"><span class="home-icon" aria-hidden="true">◉</span><h3>Language learning</h3><p>Practice everyday English and pronunciation at your own pace.</p><span class="sm">Start learning →</span></button>
-<button class="card" data-a="nav" data-v="com"><span class="home-icon" aria-hidden="true">♧</span><h3>Local community</h3><p>Search for cultural spaces and community connections.</p><span class="sm">Explore nearby →</span></button>
-<button class="card" data-a="nav" data-v="circle"><span class="home-icon" aria-hidden="true">◎</span><h3>Community Circle</h3><p>Read and write community posts saved in this browser.</p><span class="sm">${S.posts.length?`${S.posts.length} post${S.posts.length===1?'':'s'} in this browser`:'Start a discussion'} →</span></button>
-<button class="card" data-a="nav" data-v="journey"><span class="home-icon" aria-hidden="true">✦</span><h3>My U.S. Journey</h3><p>Browse practical milestones and track what matters to you.</p><span class="sm">Continue your journey →</span></button></div>
-<section class="home-progress card" aria-label="Journey progress"><div><span class="eb">A small next step</span><h2>${next?e(next.title):'You have completed your active tasks.'}</h2><p class="sm">${progress.completed} of ${progress.total} active journey tasks complete</p></div><div class="home-progress-side"><strong>${progress.percent}%</strong><div class="bar" role="progressbar" aria-label="Journey progress" aria-valuenow="${progress.percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${progress.percent}%"></i></div><button class="btn o s" data-a="${next?'openTask':'nav'}" ${next?`data-taskid="${e(next.id)}"`:'data-v="journey"'}>${next?'Continue':'Review journey'} →</button></div></section>`;}
-function imm(){const g=s=>RES.filter(r=>r.s===s&&r.id!=='ice').map(resCard).join('');const c=S.cult;return `<div class="eb">Immigration & settling in</div><h1>${e(t('ih'))}</h1><p class="lead">Links go to the organization named on each card. Last check of links: not yet done for this draft — re-verify before launch.</p>
-<div class="warn"><b>General education, not legal advice.</b> Imminent cannot tell you about your case, eligibility, or what to file. For that, talk to a licensed attorney or DOJ-accredited representative. For rights materials in your language, use the translated versions on the source sites.</div>
-<h2>${e(t('s1'))}</h2><div class="g g2">${g('legal')}</div>
-<h2>${e(t('s2'))}</h2><section class="card"><p>Enter a county and state. Imminent has <b>no live local database</b> — it points you to a national directory you can filter by county.</p><form data-f="county" class="row"><div><label for="cty">County and state</label><input class="inp" id="cty" name="county" maxlength="80" value="${e(S.county)}" placeholder="e.g. Sacramento County, California"></div><button class="btn">Set location</button></form>
-<ol class="sm"><li>Open the Legal Services Directory.</li><li>Enter ${e(loc())} and choose the kind of help you need.</li><li>Confirm the provider is a nonprofit or DOJ-accredited before sharing documents.</li></ol><div class="row" style="gap:8px">${ext(RES[3].u,'Directory (verified national source)')}${ext('https://www.google.com/search?q='+encodeURIComponent('immigration legal services nonprofit '+loc()),'Web search (unverified results)','o')}</div></section>
-<h2>${e(t('s3'))}</h2><div class="g g2">${g('jobs')}</div><p class="sm">No live job listings are connected. Results come from the external sites above.</p>
-<h2>${e(t('s4'))}</h2><section class="card"><p>External map searches near ${e(loc())}. These are cultural/community-oriented searches — not verified or endorsed businesses.</p><div class="row"><div><label for="cu">Culture</label><select class="inp" id="cu" data-a="cult">${CULT.map(x=>`<option ${x===c?'selected':''}>${x}</option>`).join('')}</select></div></div><div class="row" style="gap:8px;margin-top:12px">${ext(map(c+' grocery market '+loc()),'Markets & groceries','o')}${ext(map(c+' restaurants '+loc()),'Restaurants','o')}${ext(map(c+' independent shops '+loc()),'Independent shops','o')}</div></section>`}
+function home(){
+ const progress=journeyProgress(),next=nextJourneyTask(),stage=next?stageForTask(next.id):null;
+ const links=[
+  ['imm','Immigration support','Trusted starting points for legal help and local services.','Explore resources'],
+  ['ice','ICE information','Official agency information and independent rights resources.','Read the guidance'],
+  ['lang','Language learning','Practice English for everyday situations at your own pace.','Choose a lesson'],
+  ['com','Communities around you','Search for cultural places, gatherings, and local connections.','Explore places'],
+  ['circle','Community Circle','Browse discussions or start a conversation. Posts stay in this browser.','Visit Community Circle']
+ ];
+ return `<section class="dashboard-intro"><div><div class="eb">${e(t('start'))}</div><h1>${e(t('hello'))}${S.name?`, ${e(S.name)}`:' — Imminent'}</h1><p class="lead">${e(t('hp'))}</p></div><aside class="dashboard-aside"><strong>Made for your own pace</strong><span>Choose what feels useful today. This guide is flexible, and you can return whenever you need.</span></aside></section>
+ <section class="next-step" aria-label="Continue your journey"><div class="next-step-main"><div class="eb">${next?'Your next step':'Your journey'}</div>${next?`<span class="tag gr">${e(stage.title)}</span><h2>${e(next.title)}</h2><p>${e(next.what)}</p><button class="btn" data-a="openTask" data-taskid="${e(next.id)}">Continue this step →</button>`:`<h2>You have completed your active tasks.</h2><p>Review your journey or add a step that matters to you.</p><button class="btn" data-a="nav" data-v="journey">Review your journey →</button>`}</div><aside class="next-step-aside"><span class="sm">Journey progress</span><strong>${progress.percent}%</strong><div class="bar" role="progressbar" aria-label="Journey progress" aria-valuenow="${progress.percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${progress.percent}%"></i></div><span class="sm">${progress.completed} of ${progress.total} active tasks complete</span><button class="btn o" data-a="nav" data-v="journey">View My U.S. Journey</button></aside></section>
+ <section aria-labelledby="support-links-title"><div class="dashboard-section-head"><div><div class="eb">Find support</div><h2 id="support-links-title">Explore what can help</h2></div><button class="btn o s" data-a="nav" data-v="timeline">Personalize my timeline</button></div><div class="dashboard-links">${links.map(([page,title,detail,action])=>`<button class="dashboard-link" data-a="nav" data-v="${page}"><span class="dashboard-link-icon" aria-hidden="true">${page==='imm'?'▤':page==='ice'?'ⓘ':page==='lang'?'◉':page==='com'?'♧':'◎'}</span><span><strong>${title}</strong><small>${detail}</small></span><span class="dashboard-link-action">${action} →</span></button>`).join('')}</div></section>`;
+}
+function imm(){
+ const group=category=>RES.filter(resource=>resource.s===category).map(resCard).join('');
+ const location=loc();
+ return `<div class="imm-intro"><div><div class="eb">Immigration & settling in</div><h1>${e(t('ih'))}</h1><p class="lead">Clear starting points for legal help, rights information, work, and English learning. Each resource opens the named organization’s own website.</p></div><div class="warn imm-notice"><b>General information, not legal advice.</b> Imminent cannot assess your case, eligibility, or what to file. For individual advice, contact a licensed attorney or DOJ-accredited representative. Use translated materials on the original source sites.</div></div>
+ <section aria-labelledby="resource-heading"><div class="dashboard-section-head"><div><div class="eb">Trusted starting points</div><h2 id="resource-heading">Browse support and information</h2></div></div>
+ <div class="resource-filters"><div><label for="imm-query">Search by name or topic</label><input class="inp" id="imm-query" type="search" data-a="immSearch" value="${e(S.immQuery)}" placeholder="Try “legal help” or “English classes”"></div><div><label for="imm-category">Filter by category</label><select class="inp" id="imm-category" data-a="immCategory"><option value="all" ${S.immCategory==='all'?'selected':''}>All categories</option><option value="legal" ${S.immCategory==='legal'?'selected':''}>Legal help and rights</option><option value="jobs" ${S.immCategory==='jobs'?'selected':''}>Work and learning</option></select></div><p class="resource-count" data-resource-count aria-live="polite">Showing ${RES.length} of ${RES.length} resources</p></div>
+ <div class="imm-resource-list g g2">
+  <section class="imm-resource-group" data-resource-group><h3>Legal help and rights</h3><div class="g">${group('legal')}</div></section>
+  <section class="imm-resource-group" data-resource-group><h3>Work and learning</h3><div class="g">${group('jobs')}</div></section>
+ </div><p class="empty-state" data-resource-empty hidden>No resources match that search. Try another word or choose all categories.</p>
+ <p class="sm">These organizations are independent sources, not endorsements by Imminent. Check current services, languages, and eligibility directly with each provider.</p></section>
+ <section class="local-support" aria-labelledby="local-support-title"><h2 id="local-support-title">Find help in your area</h2><p>Enter a broad location such as a county and state. This site has no live provider database; the directory below is a national starting point.</p><form data-f="county" class="row"><div><label for="cty">County and state</label><input class="inp" id="cty" name="county" maxlength="80" value="${e(S.county)}" placeholder="e.g. Sacramento County, California"></div><button class="btn">Update location</button></form>
+ <ol><li>Open the nonprofit legal-services directory.</li><li>Search by ${e(location)} and the type of help you need.</li><li>Confirm the provider’s services, language access, fees, and credentials directly.</li></ol><div class="row">${ext(RES.find(resource=>resource.id==='dir').u,'Open legal-services directory')}${ext('https://www.google.com/search?q='+encodeURIComponent('immigration legal services nonprofit '+location),'Search the web (unverified results)','o')}<button class="btn o" data-a="nav" data-v="com">Explore local community spaces</button></div></section>`;
+}
 function ice(){return `<div class="eb">Immigration and Customs Enforcement</div><h1>ICE information and support</h1><p class="lead">A separate place to find official agency information, independent rights materials, and nonprofit legal-help directories.</p>
 <div class="warn"><b>General information only—not legal advice.</b> This page cannot assess an individual situation or tell you what to do. For advice about a specific case, contact a licensed attorney or a DOJ-accredited representative. Do not post case details or identity documents here.</div>
 <h2>Official information</h2><div class="g g2"><article class="card"><span class="tag gr">U.S. government</span><h3 style="margin-top:10px">U.S. Immigration and Customs Enforcement</h3><p>Visit ICE's official website for agency information, announcements, and contact resources. This is the agency's own information.</p>${ext('https://www.ice.gov/','Visit ICE.gov','o')}</article><article class="card"><span class="tag gr">U.S. government</span><h3 style="margin-top:10px">Avoid immigration scams</h3><p>USCIS explains how to identify immigration-services scams and find authorized legal help.</p>${ext('https://www.uscis.gov/avoid-scams','Read USCIS guidance','o')}</article></div>
@@ -415,25 +450,38 @@ function pron(){
  ${S.clip?`<div style="margin-top:15px"><label>Your recording</label><audio controls src="${e(S.clip)}" style="width:100%;max-width:430px"></audio></div>`:''}
  <p class="sm" style="margin:14px 0">Microphone permission may be required. Recordings stay in your browser session; nothing is uploaded or automatically graded.</p>
  <button class="btn o s" data-a="tmark" data-v="pron" aria-pressed="${!!S.done.pron}">${S.done.pron?'✓ Practice marked complete':'Mark practice complete'}</button>
- </section><div class="foot">More free learning resources: ${ext(RES[7].u,'USAHello','o')}</div>`;
+ </section><div class="foot">More free learning resources: ${ext(RES[6].u,'USAHello','o')}</div>`;
 }
-function lang(){if(S.langView==='pron')return pron();const l=lesson(),k=lk(),i=LV.indexOf(S.lv),tot=Object.values(LS).reduce((n,a)=>n+a.length,0),dn=Object.keys(S.ld).length;const p=S.pick;
-return `<div class="eb">Learn at your pace</div><h1>${e(t('lh'))}</h1><p class="lead">Practical phrases for everyday moments. Nine everyday situations. Some have three lessons (A1, B1, C1); other levels show the closest one.</p>
-${languageNav()}<div class="card"><label>Your level (browsing only — not an assessment)</label><div class="lv" role="group">${LV.map(v=>`<button data-a="lv" data-v="${v}" class="${v===S.lv?'on':''} ${S.ld[key(S.cx,v)]?'dn':''}" aria-pressed="${v===S.lv}">${v}</button>`).join('')}</div>
-<div class="cx" role="group">${CX.map(c=>`<button data-a="cx" data-v="${e(c)}" class="${c===S.cx?'on':''}">${e(c)}</button>`).join('')}</div>
-<div class="bar"><i style="width:${dn/tot*100}%"></i></div><span class="sm">${dn} of ${tot} lessons completed</span></div>
-<div class="g g2" style="margin-top:16px"><section class="card"><span class="tag">${e(S.cx)} · ${S.lv}</span>${LS[S.cx].length<6&&!'A1B1C1'.includes(S.lv)?' <span class="tag gr">closest available lesson</span>':''}<h3 style="margin-top:10px">${e(l[0])}</h3><div class="q">“${e(l[1])}”</div><button class="btn" data-a="say" data-v="${e(l[1])}">▶ Listen</button>
-<h3 style="margin-top:16px">Vocabulary</h3><p>${e(l[6])}</p><h3>Why it works</h3><p>${e(l[7])}</p></section>
-<section class="card"><div class="eb">Quick check</div><h3 style="margin-top:6px">${e(l[2])}</h3>${l[3].map((c,j)=>`<button class="opt ${p===null?'':j===l[4]?'c':j===p?'w':''}" data-a="pick" data-v="${j}" ${p!==null?'aria-disabled="true"':''}>${e(c)}${p!==null&&j===l[4]?' ✓':''}</button>`).join('')}
-${p!==null?`<div class="${p===l[4]?'ok':'warn'}" role="status" style="margin-top:10px"><b>${p===l[4]?'Correct!':'Not quite.'}</b> ${e(l[5])}</div><div class="row" style="gap:8px;margin-top:10px"><button class="btn o s" data-a="pick" data-v="-1">Try again</button>${i<5?`<button class="btn s" data-a="lv" data-v="${LV[i+1]}">Next lesson →</button>`:''}</div>`:''}</section></div>
-<div class="section-cta"><h3>Want to practice speaking?</h3><p>Open Pronunciation Studio for a separate, focused practice page.</p><button class="btn" data-a="sub" data-v="pron">Go to Pronunciation Studio →</button></div>
- <div class="foot">More free lessons: ${ext(RES[7].u,'USAHello','o')}</div>`}
+function lang(){
+ if(S.langView==='pron')return pron();
+ const l=lesson(),i=LV.indexOf(S.lv),total=Object.values(LS).reduce((sum,lessons)=>sum+lessons.length,0),completed=Object.keys(S.ld).length,p=S.pick;
+ const categoryCount=category=>Object.keys(S.ld).filter(key=>key.startsWith(category)).length;
+ return `<div class="eb">Language learning</div><h1>Everyday English, for everyday life.</h1><p class="lead">Practice useful phrases for situations you may encounter. Choose a level and a topic; you can change either whenever you like.</p>
+ ${languageNav()}<div class="learning-layout"><aside class="lesson-sidebar"><div class="eb">Your learning path</div><h2>Choose a level</h2><p class="sm">This is for browsing, not an assessment. Choose the level that feels right for you.</p><div class="level-options" role="group" aria-label="English level">${LV.map(level=>`<button data-a="lv" data-v="${level}" class="${level===S.lv?'on':''} ${S.ld[key(S.cx,level)]?'dn':''}" aria-pressed="${level===S.lv}">${level}</button>`).join('')}</div><div class="bar" role="progressbar" aria-label="Lessons completed" aria-valuenow="${completed}" aria-valuemin="0" aria-valuemax="${total}"><i style="width:${total?completed/total*100:0}%"></i></div><p class="learning-progress">${completed} of ${total} lessons completed</p><h2>Choose a situation</h2><nav class="lesson-categories" aria-label="Lesson situations">${CX.map(category=>`<button data-a="cx" data-v="${e(category)}" class="${category===S.cx?'on':''}" ${category===S.cx?'aria-current="page"':''}><span>${e(category)}</span>${categoryCount(category)?` <span class="sm">· ${categoryCount(category)} done</span>`:''}</button>`).join('')}</nav><p class="sm">Some situations have fewer lessons than others. When a level is unavailable, the closest lesson is shown.</p></aside>
+ <div class="learning-main"><p class="learning-progress">${e(S.cx)} · ${S.lv}${LS[S.cx].length<6&&!'A1B1C1'.includes(S.lv)?' · Closest available lesson':''}</p><div class="lesson-panels"><section class="lesson-panel" aria-label="Practice phrase"><span class="tag">${e(S.cx)} · ${S.lv}</span><h2>${e(l[0])}</h2><div class="q" lang="en">“${e(l[1])}”</div><button class="btn" data-a="say" data-v="${e(l[1])}"><span aria-hidden="true">▶</span> Listen to the phrase</button><h3>Useful words</h3><p>${e(l[6])}</p><h3>Why this phrase works</h3><p>${e(l[7])}</p></section>
+ <section class="lesson-panel" aria-labelledby="lesson-check-title"><div class="eb">Quick check</div><h2 id="lesson-check-title">${e(l[2])}</h2><div role="group" aria-labelledby="lesson-check-title">${l[3].map((choice,index)=>`<button class="opt ${p===null?'':index===l[4]?'c':index===p?'w':''}" data-a="pick" data-v="${index}" ${p!==null?'aria-disabled="true"':''}>${e(choice)}${p!==null&&index===l[4]?' ✓':''}</button>`).join('')}</div>
+ ${p!==null?`<div class="${p===l[4]?'ok':'warn'}" role="status" style="margin-top:12px"><b>${p===l[4]?'That’s right.':'Not quite.'}</b> ${e(l[5])}</div><div class="row" style="gap:8px;margin-top:12px"><button class="btn o s" data-a="pick" data-v="-1">Try again</button>${i<5?`<button class="btn s" data-a="lv" data-v="${LV[i+1]}">Next level →</button>`:''}</div>`:''}</section></div>
+ <section class="section-cta"><h3>Practice speaking, without a score</h3><p>Listen, repeat, and record a phrase privately in your browser.</p><button class="btn o" data-a="sub" data-v="pron">Open Pronunciation Studio →</button></section></div></div>
+ <div class="foot">More free lessons: ${ext(RES[6].u,'USAHello','o')}</div>`;
+}
 function fitems(){const q=S.q.trim().toLowerCase();const a=S.posts.filter(p=>(S.fl==='All'||p.l===S.fl)&&(S.ft==='All'||p.t===S.ft)&&(!q||(p.h+' '+p.b).toLowerCase().includes(q)));
 return a.length?a.map(p=>`<article class="fi"><div class="meta"><span class="tag">${e(p.t)}</span><span>${e(p.l)}</span>${p.createdAt?`<time datetime="${e(p.createdAt)}">${e(new Date(p.createdAt).toLocaleDateString())}</time>`:''}</div><h3>${e(p.h)}</h3><p style="margin:0 0 8px;color:var(--mut)">${e(p.b)}</p><div class="meta">By ${e(p.a)}</div></article>`).join(''):'<div class="empty-state"><b>No posts yet.</b><br>Start the first discussion, or adjust the filters.</div>'}
-function com(){const c=S.cult;return `<div class="eb">Belong wherever you are</div><h1>${e(t('ch'))}</h1><p class="lead">Find familiar places through external map searches. Imminent does not list or verify businesses or events.</p>
-<section class="card"><form data-f="cloc" class="row"><div><label for="cu2">Community</label><select class="inp" id="cu2" name="cult">${CULT.map(x=>`<option ${x===c?'selected':''}>${x}</option>`).join('')}</select></div><div><label for="ct2">County and state</label><input class="inp" id="ct2" name="county" maxlength="80" value="${e(S.county)}" placeholder="e.g. King County, Washington"></div><button class="btn">Update</button></form></section>
-<div class="g g3" style="margin-top:16px">${[['Churches & religious centers',c+' church temple mosque '+loc()],['Cultural organizations & community centers',c+' cultural community center '+loc()],['Grocery stores & markets',c+' grocery market '+loc()],['Restaurants',c+' restaurant '+loc()]].map(([h,q])=>`<div class="card"><h3>${h}</h3><p>${e(c)}, near ${e(loc())}.</p>${ext(map(q),'Search maps','o')}</div>`).join('')}<div class="card"><h3>Festivals & events</h3><p>Check each organizer's site before attending.</p>${ext('https://www.google.com/search?q='+encodeURIComponent(c+' cultural festival events '+loc()),'Search events','o')}</div></div>
-`}
+function com(){
+ const categories=[
+  {id:'culture',title:'Cultural organizations and community centers',detail:'Look for cultural associations, community centers, and welcoming groups.',query:'cultural community center'},
+  {id:'faith',title:'Faith and spiritual communities',detail:'Search for places of worship and community gatherings.',query:'church temple mosque spiritual community'},
+  {id:'market',title:'Markets and grocery stores',detail:'Find grocery stores, markets, and familiar ingredients nearby.',query:'grocery market'},
+  {id:'restaurant',title:'Restaurants and cafés',detail:'Explore local restaurants, cafés, and places to meet.',query:'restaurant cafe'},
+  {id:'event',title:'Festivals and public events',detail:'Find public gatherings and confirm dates with each organizer.',query:'cultural festival community events'}
+ ];
+ const chosen=categories.filter(category=>S.communityCategory==='all'||category.id===S.communityCategory);
+ const language=S.communityLanguage==='All languages'?'':S.communityLanguage;
+ return `<div class="community-section-head"><div><div class="eb">Belong wherever you are</div><h1>${e(t('ch'))}</h1><p class="lead">Discover cultural places and local gatherings. Imminent does not host or verify listings; searches open external map or event results.</p></div><button class="btn o" data-a="nav" data-v="circle">Go to Community Circle →</button></div>
+ <section class="community-search" aria-labelledby="community-search-title"><h2 id="community-search-title">Set your search area</h2><form data-f="cloc" class="row"><div><label for="community-culture">Culture or community</label><select class="inp" id="community-culture" name="cult">${CULT.map(value=>`<option ${value===S.cult?'selected':''}>${e(value)}</option>`).join('')}</select></div><div><label for="community-location">City, county, or ZIP code</label><input class="inp" id="community-location" name="county" maxlength="80" value="${e(S.county)}" placeholder="e.g. King County, Washington"></div><div><label for="community-language">Language to include (optional)</label><select class="inp" id="community-language" name="language">${JOURNEY_LANGUAGES.map(value=>`<option ${value===S.communityLanguage?'selected':''}>${e(value)}</option>`).join('')}</select></div><div><label for="community-category">Place or event type</label><select class="inp" id="community-category" name="category"><option value="all" ${S.communityCategory==='all'?'selected':''}>All categories</option>${categories.map(category=>`<option value="${category.id}" ${S.communityCategory===category.id?'selected':''}>${e(category.title)}</option>`).join('')}</select></div><button class="btn">Update places</button></form><p class="sm community-note">A county or city is enough. Results are external and unverified; confirm the address, hours, cost, language access, and event details with the organizer.</p></section>
+ <div class="community-section-head"><div><div class="eb">Explore nearby</div><h2>Places to start looking</h2></div><span class="sm">${chosen.length} search ${chosen.length===1?'category':'categories'}</span></div>
+ <div class="community-list">${chosen.map(category=>{const terms=[S.cult,category.query,language,S.county.trim()].filter(Boolean).join(' '),url=category.id==='event'?'https://www.google.com/search?q='+encodeURIComponent(terms):map(terms);return `<article class="community-result"><div><span class="tag gr">${category.id==='event'?'Events':'Places'}</span><h3>${e(category.title)}</h3><p>${e(category.detail)} Search terms include ${e(S.cult)}${language?', '+e(language):''}${S.county?', near '+e(S.county):''}.</p></div>${ext(url,category.id==='event'?'Search events':'Search maps','o')}</article>`}).join('')}</div>
+ <p class="sm" style="margin-top:1rem">For community conversations, questions, and language-learning discussions, visit <button class="btn o s" data-a="nav" data-v="circle">Community Circle</button>.</p>`;
+}
 /* Community Circle posts are user-created and stored in this browser's IndexedDB. */
 function circle(){return `<div class="eb">Community Circle</div><h1>A place to ask, share, and connect.</h1><p class="lead">Start a conversation about everyday life, language learning, housing, and new beginnings.</p>
 <section class="card"><div class="warn" style="margin-bottom:14px"><b>Community guidelines:</b> Be kind. Never post names of others, addresses, ID or case numbers, or legal documents. Do not share immigration case details. Posts are stored in this browser only; they are not visible to other visitors or shared across devices. A shared community requires a secure server and active moderation.</div>
@@ -444,22 +492,43 @@ function acc(){const sv=RES.filter(r=>S.saved[r.id]);return `<div class="eb">You
 <div class="g g2"><section class="card"><form data-f="acct"><label for="nm">Display name (a nickname is fine)</label><input class="inp" id="nm" name="name" minlength="2" maxlength="30" required value="${e(S.name)}" autocomplete="off"><label for="pf" style="margin-top:10px">Preferred language</label><select class="inp" id="pf" name="pref">${LANGS.map(x=>`<option ${x===S.pref?'selected':''}>${x}</option>`).join('')}</select><label for="pc" style="margin-top:10px">County (general location)</label><input class="inp" id="pc" name="county" maxlength="80" value="${e(S.county)}"><label for="pv" style="margin-top:10px">English level</label><select class="inp" id="pv" name="lv">${LV.map(x=>`<option ${x===S.lv?'selected':''}>${x}</option>`).join('')}</select><div style="margin-top:14px"><button class="btn">${S.name?'Save profile':'Continue with demo profile'}</button> ${S.name?'<button type="button" class="btn o" data-a="out">Sign out</button>':''}</div></form></section>
 <section class="card"><h3>Privacy first</h3><div class="ok">Imminent never asks for immigration status, passport or A-numbers, or legal documents. Only a display name, language, level and broad location are used.</div><h3 style="margin-top:16px">Saved resources (${sv.length})</h3>${sv.length?sv.map(r=>`<p style="margin:6px 0">${ext(r.u,r.t,'o s')}</p>`).join(''):'<p class="sm">Nothing saved yet. Use ☆ Save on resource cards.</p>'}<h3>Learning progress</h3><p>${Object.keys(S.ld).length} lessons completed</p></section></div>`}
 /* Keep navigation labels localized independently of page content. */
-function navText(k){const labels={home:{en:'Home',es:'Inicio',ko:'홈',zh:'首页'},timeline:{en:'My Timeline',es:'Mi cronología',ko:'나의 타임라인',zh:'我的时间线'},journey:{en:'My U.S. Journey',es:'Mi recorrido en EE.UU.',ko:'나의 미국 여정',zh:'我的美国之旅'},ice:{en:'ICE',es:'ICE',ko:'ICE',zh:'ICE'}};return labels[k]?.[S.lang]||t(k)}
-function render(){const V={home,timeline,journey,imm,ice,lang,com,circle,acc},N=[['home','⌂'],['timeline','▥'],['journey','✦'],['imm','▤'],['ice','ⓘ'],['lang','◉'],['com','♧'],['circle','◎']];
-document.documentElement.lang=S.lang;
-$('#app').innerHTML=`<a class="skip" href="#main">Skip to content</a><div class="app"><header class="side ${S.menuOpen?'menu-open':''}"><button class="menu-toggle" data-a="menu" aria-expanded="${S.menuOpen}" aria-controls="main-nav"><span aria-hidden="true">☰</span><span>Menu</span></button><div class="brand"><span class="mark" aria-hidden="true">✳</span>imminent</div><nav class="nav" id="main-nav" aria-label="Main navigation" aria-hidden="${!S.menuOpen}" ${S.menuOpen?'':'inert'}><button class="menu-close" data-a="menu"><span aria-hidden="true">×</span><span>Close menu</span></button>${N.map(([k,i])=>`<button data-a="nav" data-v="${k}" class="${S.page===k?'on':''}" ${S.page===k?'aria-current="page"':''}><span aria-hidden="true">${i}</span><span>${e(navText(k))}</span></button>`).join('')}</nav><button class="profile-toggle" data-a="nav" data-v="acc">${e(navText('acc'))}</button></header><button class="menu-backdrop ${S.menuOpen?'is-open':''}" data-a="menu" aria-label="Close navigation menu" tabindex="${S.menuOpen?'0':'-1'}"></button>
-<main class="main" id="main" tabindex="-1"><div class="top"><label class="language-control"><span aria-hidden="true">🌐</span><span class="visually-hidden">Language</span><select data-a="L" aria-label="Language">${Object.keys(T).map(k=>`<option value="${k}" ${k===S.lang?'selected':''}>${T[k].n}</option>`).join('')}</select></label></div><div class="wrap"><div class="warn" role="status" data-storage-warning style="${S.storageIssue?'':'display:none'}">${e(S.storageIssue)}</div>${S.page!=='home'&&t('untr')?`<div class="warn" style="margin-bottom:14px">${e(t('untr'))}</div>`:''}${S.toast?`<div class="ok" role="status" style="margin-bottom:14px">${e(S.toast)} <button class="btn o s" data-a="x">Dismiss</button></div>`:''}${V[S.page]()}<div class="foot">Imminent is an educational prototype, not immigration or legal advice. Community posts are stored locally in this browser.</div></div></main></div>`}
+function navText(k){const labels={home:{en:'Home',es:'Inicio',ko:'홈',zh:'首页'},timeline:{en:'My Timeline',es:'Mi cronología',ko:'나의 타임라인',zh:'我的时间线'},journey:{en:'My U.S. Journey',es:'Mi recorrido en EE.UU.',ko:'나의 미국 여정',zh:'我的美国之旅'},ice:{en:'ICE',es:'ICE',ko:'ICE',zh:'ICE'},acc:{en:'Log In / Profile',es:'Iniciar sesión / Perfil',ko:'로그인 / 프로필',zh:'登录 / 个人资料'},accShort:{en:'Log In',es:'Ingresar',ko:'로그인',zh:'登录'}};return labels[k]?.[S.lang]||t(k)}
+function render(){
+ const V={home,timeline,journey,imm,ice,lang,com,circle,acc};
+ const N=[['home','⌂'],['timeline','▥'],['journey','✦'],['imm','▤'],['ice','ⓘ'],['lang','◉'],['com','♧'],['circle','◎']];
+ const navHidden=!S.menuOpen;
+ document.documentElement.lang='en';
+ document.documentElement.dir='ltr';
+ $('#app').innerHTML=`<a class="skip" href="#main">Skip to content</a><div class="app"><header class="side site-header ${S.menuOpen?'menu-open':''}">
+ <button class="menu-toggle" data-a="menu" aria-expanded="${S.menuOpen}" aria-controls="main-nav"><span aria-hidden="true">☰</span><span>Menu</span></button>
+ <button class="brand" data-a="nav" data-v="home" aria-label="Imminent home"><span class="mark" aria-hidden="true">✳</span><span class="brand-name">imminent</span></button>
+ <nav class="nav" id="main-nav" aria-label="Main navigation" aria-hidden="${navHidden}" ${navHidden?'inert':''}>
+  <button class="menu-close" data-a="menu"><span aria-hidden="true">×</span><span>Close menu</span></button>
+  ${N.map(([k,i])=>`<button data-a="nav" data-v="${k}" class="${S.page===k?'on':''}" ${S.page===k?'aria-current="page"':''}><span aria-hidden="true">${i}</span><span lang="${S.lang==='zh'?'zh-Hans':S.lang}">${e(navText(k))}</span></button>`).join('')}
+ </nav><button class="profile-toggle" data-a="nav" data-v="acc" aria-label="${e(navText('acc'))}" lang="${S.lang==='zh'?'zh-Hans':S.lang}"><span class="profile-long">${e(navText('acc'))}</span><span class="profile-short">${e(navText('accShort'))}</span></button></header><button class="menu-backdrop ${S.menuOpen?'is-open':''}" data-a="menu" aria-label="Close navigation menu" tabindex="${S.menuOpen?'0':'-1'}"></button>
+ <main class="main" id="main" tabindex="-1"><div class="top"><label class="language-control"><span aria-hidden="true">🌐</span><span>Language</span><select data-a="L" aria-label="Language">${Object.keys(T).map(k=>`<option value="${k}" lang="${k==='zh'?'zh-Hans':k}" ${k===S.lang?'selected':''}>${T[k].n}</option>`).join('')}</select></label></div><div class="wrap"><div class="warn" role="status" data-storage-warning style="${S.storageIssue?'':'display:none'}">${e(S.storageIssue)}</div>${S.lang!=='en'&&t('untr')?`<div class="warn" lang="${S.lang==='zh'?'zh-Hans':S.lang}" style="margin-bottom:14px">${e(t('untr'))}</div>`:''}${S.toast?`<div class="ok" role="status" style="margin-bottom:14px">${e(S.toast)} <button class="btn o s" data-a="x">Dismiss</button></div>`:''}${V[S.page]()}<div class="foot">Imminent is an educational prototype, not immigration or legal advice. Community posts are stored locally in this browser.</div></div></main></div>`;
+ if(S.page==='imm')applyImmigrationFilters();
+}
 const $=s=>document.querySelector(s);
-const go=(p,sub)=>{S.page=p;if(p==='lang')S.langView=sub||'lessons';S.toast='';S.err='';render();scrollTo(0,0)};
+const go=(p,sub)=>{S.page=p;if(p==='lang')S.langView=sub||'lessons';S.toast='';S.err='';render();scrollTo(0,0);requestAnimationFrame(()=>document.getElementById('main')?.focus({preventScroll:true}))};
 const toast=m=>{S.toast=m;render()};
-document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&S.menuOpen){S.menuOpen=false;render()}});
+document.addEventListener('keydown',ev=>{
+ if(ev.key==='Escape'&&S.menuOpen){S.menuOpen=false;render();requestAnimationFrame(()=>document.querySelector('.menu-toggle')?.focus());return}
+ if(ev.key==='Tab'&&S.menuOpen){
+  const items=[...document.querySelectorAll('#main-nav button:not([disabled])')];
+  if(!items.length)return;
+  const first=items[0],last=items[items.length-1];
+  if(ev.shiftKey&&document.activeElement===first){ev.preventDefault();last.focus()}
+  else if(!ev.shiftKey&&document.activeElement===last){ev.preventDefault();first.focus()}
+ }
+});
 /* ===== USER INTERACTIONS =====
    Click handlers control navigation, timeline completion, lessons, and demo posts.
    Form handlers update settings and basic non-sensitive local preferences.
 */
 let rec,chunks=[];
 document.addEventListener('click',ev=>{const el=ev.target.closest('[data-a]');if(!el||el.tagName==='SELECT'||el.tagName==='INPUT'&&el.type!=='checkbox')return;const a=el.dataset.a,v=el.dataset.v;
-if(a==='menu'){S.menuOpen=!S.menuOpen;render()}else if(a==='nav'){S.menuOpen=false;go(v,el.dataset.sub)}else if(a==='sub'){S.langView=v;render();scrollTo(0,0)}else if(a==='tmark'){S.done[v]=!S.done[v];save();render()}else if(a==='lv'){S.lv=v;S.done.level=true;S.pick=null;save();render()}else if(a==='cx'){S.cx=v;S.pick=null;render()}
+if(a==='menu'){S.menuOpen=!S.menuOpen;render();requestAnimationFrame(()=>document.querySelector(S.menuOpen?'#main-nav button[data-v]':'.menu-toggle')?.focus())}else if(a==='nav'){S.menuOpen=false;go(v,el.dataset.sub)}else if(a==='sub'){S.langView=v;render();scrollTo(0,0)}else if(a==='tmark'){S.done[v]=!S.done[v];save();render()}else if(a==='lv'){S.lv=v;S.done.level=true;S.pick=null;save();render()}else if(a==='cx'){S.cx=v;S.pick=null;render()}
 else if(a==='pick'){if(+v===-1)S.pick=null;else if(S.pick===null){S.pick=+v;if(S.pick===lesson()[4]){S.ld[lk()]=1;S.done.english=true;save()}}render()}
 else if(a==='say'){if('speechSynthesis'in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(v);u.lang='en-US';u.rate=el.dataset.slow?.6:.9;speechSynthesis.speak(u)}else toast('Audio is not supported in this browser.')}
 else if(a==='save'){S.saved[v]=!S.saved[v];save();render()}else if(a==='compose'){S.compose=!S.compose;S.err='';render()}
@@ -468,12 +537,13 @@ else if(a==='rec'){if(rec&&rec.state==='recording'){rec.stop();return}if(!naviga
 document.addEventListener('change',ev=>{const el=ev.target,a=el.dataset.a;if(!a)return;
 if(a==='chk'){S.done[el.dataset.v]=el.checked;save();render()}else if(a==='L'){S.lang=el.value;save();render()}else if(a==='cult'){S.cult=el.value;render()}
 else if(a==='fl'){S.fl=el.value;$('#fl-list').innerHTML=fitems()}else if(a==='ft'){S.ft=el.value;$('#fl-list').innerHTML=fitems()}});
-document.addEventListener('input',ev=>{if(ev.target.dataset.a==='q'){S.q=ev.target.value;$('#fl-list').innerHTML=fitems()}});
+document.addEventListener('change',ev=>{const el=ev.target;if(el.dataset.a==='immCategory'){S.immCategory=el.value;applyImmigrationFilters()}});
+document.addEventListener('input',ev=>{const el=ev.target;if(el.dataset.a==='q'){S.q=el.value;$('#fl-list').innerHTML=fitems()}else if(el.dataset.a==='immSearch'){S.immQuery=el.value;applyImmigrationFilters()}});
 const PII=/\b[aA][-\s]?\d{8,9}\b|\b\d{3}-\d{2}-\d{4}\b|[\w.+-]+@[\w-]+\.\w+|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b|passport|alien registration|receipt number|case number/i;
 document.addEventListener('submit',async ev=>{const f=ev.target.dataset.f;if(!f)return;ev.preventDefault();const d=Object.fromEntries(new FormData(ev.target));
 if(f==='personalize'){S.goal=Object.prototype.hasOwnProperty.call(GOALS,d.goal)?d.goal:'settle';S.lv=LV.includes(d.lv)?d.lv:'A1';S.done.level=true;S.county=(d.county||'').trim().slice(0,80);save();toast('Your timeline has been updated.')}
  else if(f==='county'){S.county=(d.county||'').trim().slice(0,80);save();toast(S.county?'Area set to '+S.county:'Area cleared.')}
-else if(f==='cloc'){S.county=(d.county||'').trim().slice(0,80);S.cult=d.cult;S.done.community=true;save();toast('Search updated.')}
+else if(f==='cloc'){S.county=(d.county||'').trim().slice(0,80);S.cult=CULT.includes(d.cult)?d.cult:S.cult;S.communityLanguage=JOURNEY_LANGUAGES.includes(d.language)?d.language:'All languages';S.communityCategory=['all','culture','faith','market','restaurant','event'].includes(d.category)?d.category:'all';S.done.community=true;save();toast('Place searches updated.')}
 else if(f==='acct'){const n=(d.name||'').trim();if(n.length<2||PII.test(n)){return toast('Please enter a nickname (2+ characters, no personal identifiers).')}S.name=n.slice(0,30);S.pref=d.pref;S.county=(d.county||'').trim().slice(0,80);S.lv=d.lv;S.done.level=true;save();toast('Demo profile saved for this session only.')}
 else if(f==='post'){const h=(d.h||'').trim(),b=(d.b||'').trim();if(h.length<5||b.length<10){S.err='Please add a title (5+ characters) and a post (10+ characters).';return render()}
 if(PII.test(h+' '+b)){S.err='This looks like it may include private information (such as an email, phone, ID or case number). Please remove it and post again.';return render()}
