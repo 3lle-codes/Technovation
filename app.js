@@ -53,7 +53,7 @@ for(const k in X2)Object.assign(T[k],X2[k]);
    User-selected goals, county, and learning progress personalize My Timeline.
 */
 const pageFromDocument=document.body.dataset.page||'home';
-const S={page:pageFromDocument==='pron'?'lang':pageFromDocument,menuOpen:false,goal:'settle',langView:pageFromDocument==='pron'?'pron':'lessons',lang:'en',county:'',cult:'Korean',communityCategory:'all',communityLanguage:'All languages',immQuery:'',immCategory:'all',lv:'A1',cx:CX[0],pick:null,done:{},ld:{},saved:{},name:'',pref:'English',posts:[],rep:{},fl:'All',ft:'All',q:'',compose:false,err:'',toast:'',journey:{},customTasks:[],openTask:'',rfCounty:'',rfLanguage:'All languages',rfCategory:'All services',storageIssue:''};
+const S={page:pageFromDocument==='pron'?'lang':pageFromDocument,menuOpen:false,goal:'settle',langView:pageFromDocument==='pron'?'pron':'lessons',lang:'en',county:'',cult:'Korean',communityCategory:'all',communityLanguage:'All languages',immQuery:'',immCategory:'all',lv:'A1',cx:CX[0],pick:null,done:{},ld:{},saved:{},name:'',pref:'English',posts:[],rep:{},fl:'All',ft:'All',q:'',compose:false,err:'',toast:'',journey:{},customTasks:[],openTask:'',openTasks:[],rfCounty:'',rfLanguage:'All languages',rfCategory:'All services',storageIssue:''};
 if(location.hash.startsWith('#task-'))S.openTask=decodeURIComponent(location.hash.slice('#task-'.length));
 // Keep existing non-sensitive preferences after the product rename.
 try{Object.assign(S,JSON.parse(localStorage.getItem('imminent')||localStorage.getItem('immily')||'{}').p||{})}catch(err){S.storageIssue='Saved information could not be loaded from this browser.';console.warn('Imminent local data could not be loaded.',err)}
@@ -209,7 +209,7 @@ const targetDateLabel=value=>value?new Date(value+'T12:00:00').toLocaleDateStrin
 
 function journeyTaskCard(task){
   const state=taskState(task),stage=stageForTask(task.id);
-  return `<details class="task" id="task-${e(task.id)}" data-status="${e(state.status)}" ${S.openTask===task.id?'open':''}>
+  return `<details class="task" id="task-${e(task.id)}" data-status="${e(state.status)}" ${S.openTask===task.id||S.openTasks.includes(task.id)?'open':''}>
 <summary><span class="task-marker" aria-hidden="true"></span><span style="min-width:0"><span class="task-title">${e(task.title)}</span><span class="task-meta"><span>${e(taskStatusLabel(state.status))}</span><span aria-hidden="true">·</span><span>Estimated ${e(task.time)}</span>${state.date?`<span aria-hidden="true">·</span><span>Target ${e(targetDateLabel(state.date))}</span>`:''}</span></span></summary>
 <div class="task-content">
 <div><h3>What you need to do</h3><p>${e(task.what)}</p></div><div><h3>Why it matters</h3><p>${e(task.why)}</p></div>
@@ -356,6 +356,7 @@ function acc(){const sv=RES.filter(r=>S.saved[r.id]),lessonCount=Object.keys(S.l
 /* Keep navigation labels localized independently of page content. */
 function navText(k){const labels={home:{en:'Home',es:'Inicio',ko:'홈',zh:'首页'},timeline:{en:'My Timeline',es:'Mi cronología',ko:'나의 타임라인',zh:'我的时间线'},journey:{en:'My Journey',es:'Mi recorrido',ko:'나의 여정',zh:'我的旅程'},imm:{en:'Immigration Support',es:'Apoyo migratorio',ko:'이민 지원',zh:'移民支持'},lang:{en:'Language Learning',es:'Aprendizaje de idiomas',ko:'언어 학습',zh:'语言学习'},com:{en:'Communities',es:'Comunidades',ko:'커뮤니티',zh:'社区'},ice:{en:'ICE information',es:'Información sobre ICE',ko:'ICE 정보',zh:'ICE 信息'},circle:{en:'Community Circle',es:'Círculo comunitario',ko:'커뮤니티 모임',zh:'社区交流'},acc:{en:'Profile',es:'Perfil',ko:'프로필',zh:'个人资料'},more:{en:'More',es:'Más',ko:'더 보기',zh:'更多'}};return labels[k]?.[S.lang]||t(k)}
 function render(){
+ if(S.page==='journey'&&document.querySelector('#app .task'))S.openTasks=[...document.querySelectorAll('#app .task[open]')].map(task=>task.id.slice(5));
  const V={home,timeline,journey,imm,ice,lang,com,circle,acc};
  const primaryNav=['home','journey','imm','lang','com'],secondaryNav=['timeline','ice','circle'];
  const page=S.page==='pron'?'lang':S.page;
@@ -373,6 +374,7 @@ function render(){
  <div class="nav-group"><div class="nav-group-title">Your account</div><button data-a="nav" data-v="acc" class="nav-link ${page==='acc'?'on':''}" ${page==='acc'?'aria-current="page"':''}>Profile</button><button data-a="nav" data-v="acc" class="nav-link">Saved resources</button></div></nav>
  </header><button class="menu-backdrop ${S.menuOpen?'is-open':''}" data-a="menu" aria-label="Close navigation menu" tabindex="${S.menuOpen?'0':'-1'}"></button>
  <main class="main" id="main" tabindex="-1"><div class="wrap"><div class="warn" role="status" data-storage-warning style="${S.storageIssue?'':'display:none'}">${e(S.storageIssue)}</div>${S.lang!=='en'&&t('untr')?`<div class="warn translation-note" lang="${S.lang==='zh'?'zh-Hans':S.lang}">${e(t('untr'))}</div>`:''}${S.toast?`<div class="ok toast" role="status">${e(S.toast)} <button class="btn o s" data-a="x">Dismiss</button></div>`:''}${V[S.page]()}<div class="foot">Imminent is an educational prototype, not immigration or legal advice. Progress and posts stay in this browser until browser data is cleared.</div></div></main></div>`;
+ S.openTask='';
  if(S.page==='imm')applyImmigrationFilters();
  if(location.hash)requestAnimationFrame(()=>document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView({block:'start'}));
 }

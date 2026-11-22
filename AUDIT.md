@@ -95,3 +95,4 @@ Measured with the local rendered site at 320, 375, 768, 1024, 1440, and 1920 vie
 - `My Journey` renders all 6 stages and 27 task rows. The first task can expand and the task metadata now separates status and estimated time without repeating the stage name.
 - Immigration filtering shows 2 of 7 work/learning resources when “Work and learning” is selected.
 - Browser-only storage wording is consistent: demo profile/session profile, local progress/saved resources, and IndexedDB posts remain in the browser and disappear when browser data or the profile session is cleared.
+- Journey disclosure QA found that the task-status/skip actions rerendered the page and collapsed open task details. The current fix carries all open task IDs across rerenders; browser checks confirmed open tasks stay open through status changes and skip/restore.
