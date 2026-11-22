@@ -101,6 +101,7 @@ a:hover { color: var(--blue); }
   display: inline-flex;
   align-items: center;
   justify-self: center;
+  gap: 8px;
   min-height: 44px;
   padding: 0;
   border: 0;
@@ -112,7 +113,12 @@ a:hover { color: var(--blue); }
   text-decoration: none;
 }
 .brand:hover { background: transparent; color: var(--blue); }
-.brand-logo { display: none; }
+.brand-logo {
+  display: block;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
 .brand-name { white-space: nowrap; }
 .menu-toggle,
 .profile-toggle {

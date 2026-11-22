@@ -364,7 +364,7 @@ function render(){
  document.title=titles[S.page]||titles.home;
  $('#app').innerHTML=`<a class="skip" href="#main">Skip to content</a><div class="app"><header class="side site-header ${S.menuOpen?'menu-open':''}">
  <button class="menu-toggle" data-a="menu" aria-expanded="${S.menuOpen}" aria-controls="main-nav"><span class="menu-lines" aria-hidden="true"><span class="menu-line"></span><span class="menu-line"></span><span class="menu-line"></span></span><span>Menu</span></button>
- <button class="brand" data-a="nav" data-v="home" aria-label="Imminent home"><span class="brand-name">Imminent</span></button>
+ <button class="brand" data-a="nav" data-v="home" aria-label="Imminent home"><img class="brand-logo" src="assets/imminent-heart-logo.png" alt=""><span class="brand-name">Imminent</span></button>
  <button class="profile-toggle" data-a="nav" data-v="acc" aria-label="${e(navText('acc'))}" lang="${S.lang==='zh'?'zh-Hans':S.lang}">${S.name?'Profile':'Log In'}</button>
  <nav class="nav" id="main-nav" aria-label="Main navigation" aria-hidden="${!S.menuOpen}" ${S.menuOpen?'':'inert'}><div class="nav-close-row"><strong>Menu</strong><button class="menu-close" data-a="menu" aria-label="Close menu">Close</button></div>
  <div class="nav-group"><div class="nav-group-title">Language</div><div class="nav-language">${Object.keys(T).map(k=>`<button data-a="L" data-v="${k}" class="${k===S.lang?'on':''}" aria-pressed="${k===S.lang}" lang="${k==='zh'?'zh-Hans':k}">${e(T[k].n)}</button>`).join('')}</div></div>
