@@ -85,3 +85,13 @@ Measured with the local rendered site at 320, 375, 768, 1024, 1440, and 1920 vie
 - **Partly:** Drawer/More disclosure exists, but not with the final grouped structure or language-in-drawer behavior.
 - **Partly:** Native task disclosures are usable but will need a shared button/panel implementation for consistent spacing and semantics.
 - **Not confirmed until post-edit QA:** mobile behavior in every page/state and full contrast status across the final token set.
+
+## Phase 1-5 QA update
+
+- All ten routes render at 320px and 1440px without document horizontal overflow.
+- The first implementation pass removes the separate language row and places language choices in the drawer.
+- The 320px header keeps Menu, `Imminent`, and `Log In` in one 56px-tall three-zone row; the brand remains centered while the outer controls change.
+- The drawer opens with a scrim, lists language and grouped destinations, and focuses the Close control when opened.
+- `My Journey` renders all 6 stages and 27 task rows. The first task can expand and the task metadata now separates status and estimated time without repeating the stage name.
+- Immigration filtering shows 2 of 7 work/learning resources when “Work and learning” is selected.
+- Browser-only storage wording is consistent: demo profile/session profile, local progress/saved resources, and IndexedDB posts remain in the browser and disappear when browser data or the profile session is cleared.
