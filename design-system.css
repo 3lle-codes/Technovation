@@ -1493,8 +1493,8 @@ label {
 .brand {
   gap: 8px;
   color: var(--ink);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 .brand-logo { width: 28px; height: 28px; }
@@ -1516,6 +1516,16 @@ label {
 .site-header .profile-toggle:hover {
   background: transparent;
   color: var(--blue-primary);
+}
+.site-header .profile-toggle {
+  min-width: 96px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--control-line);
+  border-radius: 8px;
+  line-height: 40px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .side .nav {
@@ -1558,8 +1568,8 @@ label {
   .main h1 { font-size: 32px; line-height: 38px; }
   .main h2 { font-size: 24px; line-height: 32px; }
   .lead { font-size: 19px; line-height: 30px; }
-  .side { padding-inline: 20px; }
-  .brand-name { font-size: 18px; }
+  .side { min-height: 56px; padding-inline: 20px; }
+  .brand-name { font-size: 20px; }
   .brand-logo { width: 24px; height: 24px; }
 }
 
