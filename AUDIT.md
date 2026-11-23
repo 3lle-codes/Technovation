@@ -43,3 +43,21 @@
 - Complete: route navigation, journey task state, skip/add-back, target date and notes, personal tasks, resource saving, lesson selection, quizzes, forum post creation, demo profile, local searches, language switching, and existing external links.
 - Partial: profile “session”/clear wording is contradictory; local-resource search is external/unverified; Community Circle is browser-local rather than shared; saved-resource count and learning progress are derived; pronunciation records are browser-session audio.
 - Placeholder/honest-empty: unavailable live-provider data is explicitly described where used. No new fact or provider data is added.
+
+## Phase 7 implementation QA status
+- A single `ui-stuff` branch is used. Foundation, header/drawer, core pages, remaining layouts, copy, and storage behavior are committed in separate phase commits.
+- Static routes for all 10 HTML entry points respond successfully over the local HTTP server.
+- `app.js` passes `node --check`.
+- The wordmark now uses typeset “Imminent” text in the shared header; the lowercase/illustration header treatment was removed.
+- Page layouts use the requested near-white canvas token, Inter type stack, 12-column layout primitives, flat ruled rows, white panels, and navy ICE band.
+- My Journey now uses button-and-panel disclosures instead of native task `<details>` markup.
+- Guest mode avoids `save()` writes and IndexedDB reads/writes until a demo profile is created. Existing persisted `imminent`/`immily` data is treated as demo-profile data for least-surprising migration.
+- Language preference is the one approved minimal setting; it is stored separately as `imminent-lang`.
+- Existing Community Circle IndexedDB posts remain browser-local and are not loaded for a guest until demo-profile mode is active.
+
+## Known remaining gaps
+- Automated 320/390/768/1024/1440/1920 screenshot measurements are not available in this CLI-only pass. Desktop/mobile CSS reflow rules exist, but final visual screenshots were not captured.
+- The existing application remains largely JavaScript-rendered. A `<noscript>` fallback is not yet included.
+- Inline styles and legacy CSS overrides remain in some non-core pages. They should be cleaned in a dedicated CSS organization pass rather than risking content or behavior changes.
+- Full in-browser keyboard/screen-reader QA and contrast measurement have not been automated. Existing focus rings, skip link, live toast region, drawer Escape handling, and aria-expanded controls are present.
+- Four exact source labels cannot be introduced because `JOURNEY_RESOURCES` and `RES` do not consistently contain separate government/nonprofit/educational/community fields. The audit reports this as a data gap, not a guess.
