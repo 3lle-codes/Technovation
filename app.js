@@ -54,18 +54,22 @@ for(const k in X2)Object.assign(T[k],X2[k]);
 */
 const pageFromDocument=document.body.dataset.page||'home';
 const S={page:pageFromDocument==='pron'?'lang':pageFromDocument,menuOpen:false,moreOpen:false,demoProfile:false,goal:'settle',langView:pageFromDocument==='pron'?'pron':'lessons',lang:'en',county:'',cult:'Korean',communityCategory:'all',communityLanguage:'All languages',immQuery:'',immCategory:'all',lv:'A1',cx:CX[0],pick:null,done:{},ld:{},saved:{},name:'',pref:'English',posts:[],rep:{},fl:'All',ft:'All',q:'',compose:false,err:'',toast:'',journey:{},customTasks:[],openTask:'',openStage:'',rfCounty:'',rfLanguage:'All languages',rfCategory:'All services',storageIssue:''};
+const DEMO_PROFILE_KEY='imminent-demo-profile';
 if(location.hash.startsWith('#task-'))S.openTask=decodeURIComponent(location.hash.slice('#task-'.length));
 if(location.hash.startsWith('#stage-'))S.openStage=decodeURIComponent(location.hash.slice('#stage-'.length));
-// Keep existing non-sensitive preferences after the product rename.
-try{Object.assign(S,JSON.parse(localStorage.getItem('imminent')||localStorage.getItem('immily')||'{}').p||{})}catch(err){S.storageIssue='Saved information could not be loaded from this browser.';console.warn('Imminent local data could not be loaded.',err)}
-try{Object.assign(S,JSON.parse(sessionStorage.getItem('imminent-profile')||'{}'))}catch(err){S.storageIssue='Your demo profile could not be loaded for this browser session.';console.warn('Imminent session profile could not be loaded.',err)}
+// Only an explicit demo-profile marker authorizes loading browser-persisted profile data.
 try{
-  const legacy=JSON.parse(localStorage.getItem('imminent')||localStorage.getItem('immily')||'{}');
-  if(Object.keys(legacy.p||{}).length>0)S.demoProfile=true;
-}catch(err){}
-if(S.name)S.demoProfile=true;
+  S.demoProfile=localStorage.getItem(DEMO_PROFILE_KEY)!==null;
+  if(S.demoProfile)Object.assign(S,JSON.parse(localStorage.getItem('imminent')||'{}').p||{});
+  else{
+    localStorage.removeItem('imminent');
+    localStorage.removeItem('immily');
+    sessionStorage.removeItem('imminent-profile');
+  }
+}catch(err){S.storageIssue='Saved information could not be loaded from this browser.';console.warn('Imminent local data could not be loaded.',err)}
+if(S.demoProfile)try{Object.assign(S,JSON.parse(sessionStorage.getItem('imminent-profile')||'{}'))}catch(err){S.storageIssue='Your demo profile could not be loaded for this browser session.';console.warn('Imminent session profile could not be loaded.',err)}
 try{const lang=localStorage.getItem('imminent-lang');if(lang&&T[lang])S.lang=lang}catch(err){}
-const save=()=>{if(!S.demoProfile)return;try{localStorage.setItem('imminent',JSON.stringify({p:{lang:S.lang,goal:S.goal,lv:S.lv,done:S.done,ld:S.ld,saved:S.saved,county:S.county,journey:S.journey,customTasks:S.customTasks,rfCounty:S.rfCounty,rfLanguage:S.rfLanguage,rfCategory:S.rfCategory}}));S.storageIssue=''}catch(err){S.storageIssue='Changes could not be saved in this browser. They may be lost when you leave this page.';console.warn('Imminent local data could not be saved.',err)}const warning=document.querySelector('[data-storage-warning]');if(warning){warning.textContent=S.storageIssue;warning.style.display=S.storageIssue?'block':'none'}};
+const save=()=>{if(!S.demoProfile)return;try{localStorage.setItem(DEMO_PROFILE_KEY,'1');localStorage.setItem('imminent',JSON.stringify({p:{lang:S.lang,goal:S.goal,lv:S.lv,done:S.done,ld:S.ld,saved:S.saved,county:S.county,journey:S.journey,customTasks:S.customTasks,rfCounty:S.rfCounty,rfLanguage:S.rfLanguage,rfCategory:S.rfCategory}}));S.storageIssue=''}catch(err){S.storageIssue='Changes could not be saved in this browser. They may be lost when you leave this page.';console.warn('Imminent local data could not be saved.',err)}const warning=document.querySelector('[data-storage-warning]');if(warning){warning.textContent=S.storageIssue;warning.style.display=S.storageIssue?'block':'none'}};
 const saveSessionProfile=()=>{try{sessionStorage.setItem('imminent-profile',JSON.stringify({name:S.name,pref:S.pref}));return true}catch(err){S.storageIssue='Your demo profile could not be kept for this browser session.';console.error('Imminent session profile could not be saved.',err);return false}};
 const openForumDb=()=>new Promise((resolve,reject)=>{if(!('indexedDB'in window)){reject(new Error('IndexedDB is unavailable in this browser.'));return}const request=indexedDB.open('imminent-community',1);request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('posts'))request.result.createObjectStore('posts',{keyPath:'id'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('Could not open the community database.'))});
 const storeForumPost=async post=>{if(!S.demoProfile)return;const db=await openForumDb();try{await new Promise((resolve,reject)=>{const tx=db.transaction('posts','readwrite');tx.objectStore('posts').add(post);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Could not save your post.'));tx.onabort=()=>reject(tx.error||new Error('Saving your post was cancelled.'))})}finally{db.close()}};
@@ -270,17 +274,157 @@ function supportIcon(name){
  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>`;
 }
 function home(){
- const progress=journeyProgress(),next=nextJourneyTask(),stage=next?stageForTask(next.id):null;
- const taskList=activeTasks(),before=taskList.find(task=>taskState(task).status==='completed'),after=taskList.find(task=>task.id!==next?.id&&taskState(task).status!=='completed');
- const hardTask=JOURNEY.flatMap(stage=>stage.tasks).find(task=>task.resources?.length&&task.obstacle)||next;
- const firstResources=RES.filter(r=>r.s==='legal').slice(0,4);
- return `<section class="home-hero"><div class="container"><div class="hero-copy"><h1 class="home-display">${progress.completed?'Continue where you left off.':'Know your next step in the United States.'}</h1><div class="hero-split"><p class="lead">Imminent breaks settling in into clear tasks. Each task links to trusted resources, English practice for that situation, and communities near you.</p><div class="hero-actions">${progress.completed?'<button class="btn" data-a="nav" data-v="journey">Continue your journey</button>':'<button class="btn" data-a="nav" data-v="journey">Start your journey</button>'}<button class="text-action" data-a="nav" data-v="imm">Find legal help →</button></div></div><p class="hero-privacy">Educational prototype. Progress is saved in this browser only if you create a demo profile.</p></div><div class="hero-route" aria-label="Journey route"><div class="route-line" aria-hidden="true"></div>${JOURNEY.map((s,i)=>{const p=stageProgress(s),isCurrent=stage?.id===s.id,isDone=p.total>0&&p.completed===p.total;const n=next&&stage?.id===s.id?next:null;return `<button class="route-stop ${isCurrent?'current':''} ${isDone?'complete':''}" data-a="stageNav" data-stageid="${e(s.id)}" aria-label="${e(s.title)}"><span class="route-numeral">${String(i+1).padStart(2,'0')}</span><span class="route-node" aria-hidden="true"></span>${isCurrent?'<span class="route-here">You are here</span>':''}<strong>${e(s.title)}</strong><small class="route-status">${p.completed} of ${p.total} tasks${n?`<span> · Next: ${e(n.title)}</span>`:''}</small></button>`}).join('')}</div></div></section>
- <section class="stage-index"><div class="container"><div class="stage-index-head"><h2>Every task has a way forward</h2></div><div class="stage-rows">${JOURNEY.map((s,i)=>{const p=stageProgress(s);return `<button class="stage-index-row" data-a="stageNav" data-stageid="${e(s.id)}"><span class="stage-index-num">${String(i+1).padStart(2,'0')}</span><span class="stage-index-name">${e(s.title)}<small>${e(s.summary)}</small></span><span class="stage-index-count">${p.completed}/${p.total} tasks</span><span class="stage-index-arrow" aria-hidden="true">→</span></button>`}).join('')}</div></div></section>
- ${hardTask?`<section class="hard-band"><div class="container"><h2>When a task gets hard</h2><div class="hard-layout"><div class="hard-task-list">${JOURNEY.flatMap(st=>st.tasks).filter(t=>t.resources?.length&&t.obstacle).slice(0,5).map(t=>`<button class="hard-task ${t.id===hardTask.id?'selected':''}" data-a="openTask" data-taskid="${e(t.id)}">${e(t.title)}</button>`).join('')}</div><div class="hard-links"><p>${e(hardTask.title)}</p>${hardTask.resources.slice(0,2).map(id=>JOURNEY_RESOURCES[id]?`<a class="hard-row" href="${e(JOURNEY_RESOURCES[id].url)}" target="_blank" rel="noopener noreferrer"><small>Support</small><span>${e(JOURNEY_RESOURCES[id].name)}</span></a>`:'').join('')}<button class="hard-row" data-a="nav" data-v="lang"><small>Lesson</small><span>Practice the related everyday phrase</span></button><button class="hard-row" data-a="nav" data-v="com"><small>Community</small><span>Find local support</span></button></div></div></div></section>`:''}
- <section class="support-bands"><div class="container"><article class="support-band immigration-band"><div><h2>Immigration Support</h2><button class="text-action" data-a="nav" data-v="imm">Go to Immigration Support →</button></div><div>${firstResources.map(r=>`<a class="support-resource" href="${e(r.u)}" target="_blank" rel="noopener noreferrer"><span>${e(r.t)}</span><small>${e(r.org)}</small></a>`).join('')}</div></article>
- <article class="support-band language-band"><div><h2>Language Learning</h2><button class="text-action" data-a="nav" data-v="lang">Go to Language Learning →</button></div><div><div class="level-staircase">${LV.map((level,i)=>`<button data-a="lv" data-v="${level}" style="--level-height:${48+i*16}px">${level}</button>`).join('')}</div><button class="plain-link" data-a="nav" data-v="lang">Choose a lesson →</button></div></article>
- <article class="support-band communities-band"><div><h2>Communities</h2><button class="text-action" data-a="nav" data-v="com">Go to Communities →</button></div><div><form class="home-location" data-f="cloc"><label class="visually-hidden" for="home-location">City, county, or ZIP code</label><div class="giant-search"><input id="home-location" name="county" value="${e(S.county)}" placeholder="City, county, or ZIP"><input type="hidden" name="cult" value="${e(S.cult)}"><input type="hidden" name="language" value="${e(S.communityLanguage)}"><input type="hidden" name="category" value="${e(S.communityCategory)}"><button class="round-arrow" type="submit" aria-label="Search communities">→</button></div></form><button class="plain-link" data-a="nav" data-v="circle">Community Circle →</button></div></article></div></section>
+ const progress=journeyProgress(),next=nextJourneyTask();
+ const current=next?JOURNEY.find(item=>item.tasks.some(task=>task.id===next.id)):JOURNEY[JOURNEY.length-1];
+ const currentStage=current||JOURNEY[0],currentIndex=JOURNEY.findIndex(item=>item.id===currentStage.id);
+ const currentStats=stageProgress(currentStage),currentFraction=currentStats.total?currentStats.completed/currentStats.total:0;
+ const routeProgress=JOURNEY.length>1?Math.max(0,Math.min(1,(currentIndex+currentFraction)/(JOURNEY.length-1))):0;
+ const firstResources=RES.filter(resource=>resource.s==='legal').slice(0,4);
+ const hardTasks=JOURNEY.flatMap(item=>item.tasks).filter(task=>task.obstacle&&task.resources?.some(id=>JOURNEY_RESOURCES[id])).slice(0,5);
+ const languageLessonCount=Object.keys(LS).length;
+ const stageRoute=stage=>`<span class="route-preview" aria-hidden="true"><span class="route-preview-copy">${e(stage.summary)}</span><span class="route-preview-dots">${stage.tasks.map(task=>`<i class="${taskState(task).status==='completed'?'done':''}"></i>`).join('')}</span>${(() => {const task=stage.tasks.find(item=>taskState(item).status!=='completed'&&taskState(item).status!=='skipped');return task?`<span class="route-preview-next">${e(task.title)}</span>`:''})()}</span>`;
+ return `<section class="home-hero" aria-labelledby="home-title"><div class="hero-glow" aria-hidden="true"></div><svg class="hero-contours" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g fill="none" stroke="white" stroke-width="1"><path d="M-80 120C180 20 340 240 580 120S980 15 1190 120s310 180 520 45"/><path d="M-80 175C180 75 340 295 580 175s400-105 610 0 310 180 520 45"/><path d="M-80 230C180 130 340 350 580 230s400-105 610 0 310 180 520 45"/><path d="M-80 285C180 185 340 405 580 285s400-105 610 0 310 180 520 45"/><path d="M-80 340C180 240 340 460 580 340s400-105 610 0 310 180 520 45"/><path d="M-80 395C180 295 340 515 580 395s400-105 610 0 310 180 520 45"/><path d="M-80 450C180 350 340 570 580 450s400-105 610 0 310 180 520 45"/></g></svg><div class="container hero-layout"><div class="hero-heading"><h1 id="home-title" class="home-display"><span class="line-mask"><span>${progress.completed?'Continue where you left off.':'Know your next step in the United States.'}</span></span></h1></div><div class="hero-intro"><div class="hero-copy"><p class="lead">Imminent breaks settling in into clear tasks. Each task links to trusted resources, English practice for that situation, and communities near you.</p><p class="hero-privacy">Educational prototype. Progress is saved in this browser only if you create a demo profile.</p></div><div class="hero-actions">${progress.completed?'<button class="btn" data-a="nav" data-v="journey">Continue your journey <span aria-hidden="true">→</span></button>':'<button class="btn" data-a="nav" data-v="journey">Start your journey <span aria-hidden="true">→</span></button>'}<button class="text-action" data-a="nav" data-v="imm">Find legal help <span aria-hidden="true">→</span></button></div></div><div class="hero-route" aria-label="Journey route" style="--stage-count:${JOURNEY.length};--route-progress:${routeProgress}"><div class="route-track" aria-hidden="true"><span class="route-track-fill"></span></div>${JOURNEY.map((stage,index)=>{const stats=stageProgress(stage),isCurrent=stage.id===currentStage.id,isComplete=stats.total>0&&stats.completed===stats.total,stageNext=stage.tasks.find(task=>taskState(task).status!=='completed'&&taskState(task).status!=='skipped');return `<button class="route-stop ${isCurrent?'current':''} ${isComplete?'complete':''} home-reveal" data-a="stageNav" data-stageid="${e(stage.id)}" style="--route-index:${index}" aria-label="${e(stage.title)} — ${stats.completed} of ${stats.total} tasks"><span class="route-flag-slot">${isCurrent?`<span class="route-here">${progress.completed?'You are here':'Start here'}</span>`:''}</span><span class="route-numeral">${String(index+1).padStart(2,'0')}</span><span class="route-node-slot"><span class="route-node" aria-hidden="true"><span class="route-node-core"></span></span></span><span class="route-label"><strong>${e(stage.title)}</strong><small>${stats.completed} of ${stats.total} tasks</small>${isCurrent&&stageNext?`<span class="route-next">Next: ${e(stageNext.title)}</span><span class="route-continue">Continue <i aria-hidden="true">→</i></span>`:''}</span>${stageRoute(stage)}</button>`}).join('')}</div><a class="hero-chevron" href="#stage-index" aria-label="Scroll to all journey stages"><span></span></a></div></section>
+ <section class="stage-index" id="stage-index"><div class="container"><div class="stage-index-head"><h2>Every task has a way forward</h2></div><div class="stage-rows">${JOURNEY.map((stage,index)=>{const stats=stageProgress(stage),tasks=stage.tasks.slice(0,3);return `<article class="stage-index-item home-reveal" style="--reveal-index:${index}"><div class="stage-index-row" data-a="stageNav" data-stageid="${e(stage.id)}" data-stage-row aria-expanded="false"><span class="stage-index-num">${String(index+1).padStart(2,'0')}</span><span class="stage-index-name">${e(stage.title)}</span><span class="stage-index-count">${stats.completed}/${stats.total} tasks</span><button class="stage-index-arrow" data-a="stageNav" data-stageid="${e(stage.id)}" aria-label="Go to ${e(stage.title)}">→</button></div><div class="stage-index-details"><div class="stage-index-details-inner"><p>${e(stage.summary)}</p><div class="stage-index-tasks">${tasks.map(task=>`<button class="stage-task-link" data-a="openTask" data-taskid="${e(task.id)}"><i class="${taskState(task).status==='completed'?'done':''}"></i><span>${e(task.title)}</span><small>${e(task.time)}</small></button>`).join('')}</div><div class="stage-progress-dots" aria-label="${stats.completed} of ${stats.total} tasks complete">${stage.tasks.map(task=>`<i class="${taskState(task).status==='completed'?'done':''}"></i>`).join('')}</div></div></div></article>`}).join('')}</div></div></section>
+ ${hardTasks.length?`<section class="hard-band"><div class="container"><h2>When a task gets hard</h2><div class="hard-layout"><div class="hard-task-list">${hardTasks.map((task,index)=>`<button class="hard-task ${index===0?'selected':''}" data-hard-task="${index}" aria-pressed="${index===0}">${e(task.title)}</button>`).join('')}</div><div class="hard-links">${hardTasks.map((task,index)=>`<div class="hard-resource-panel ${index===0?'selected':''}" data-hard-panel="${index}" aria-hidden="${index!==0}" ${index?'inert':''}><p>${e(task.obstacle.title)}</p>${task.resources.filter(id=>JOURNEY_RESOURCES[id]).slice(0,5).map(id=>`<a class="hard-row" href="${e(JOURNEY_RESOURCES[id].url)}" target="_blank" rel="noopener noreferrer"><small>Support</small><span>${e(JOURNEY_RESOURCES[id].name)}</span></a>`).join('')}</div>`).join('')}</div></div></div></section>`:''}
+ <section class="support-bands"><div class="container"><article class="support-band immigration-band"><div><h2>Immigration Support</h2><button class="text-action" data-a="nav" data-v="imm">Go to Immigration Support <span aria-hidden="true">→</span></button></div><div>${firstResources.map(resource=>`<a class="support-resource" href="${e(resource.u)}" target="_blank" rel="noopener noreferrer"><span>${e(resource.t)}</span><small>${e(resource.org)}</small><i aria-hidden="true">→</i></a>`).join('')}</div></article>
+ <article class="support-band language-band"><div><h2>Language Learning</h2><button class="text-action" data-a="nav" data-v="lang">Go to Language Learning <span aria-hidden="true">→</span></button></div><div><div class="level-staircase" role="group" aria-label="English level">${LV.map((level,index)=>`<button data-a="lv" data-v="${level}" data-level="${level}" class="${S.demoProfile&&S.lv===level?'selected':''}" style="--level-height:${72+index*32}px;--level-index:${index}" aria-label="${level}${S.demoProfile&&S.lv===level?', your level':''}" aria-pressed="${S.demoProfile&&S.lv===level}"><span>${level}</span><small>${languageLessonCount} lessons</small>${S.demoProfile&&S.lv===level?'<i class="level-you">You</i>':''}</button>`).join('')}</div><button class="plain-link" data-a="nav" data-v="lang">Choose a lesson <span aria-hidden="true">→</span></button></div></article>
+ <article class="support-band communities-band"><div><h2>Communities</h2><button class="text-action" data-a="nav" data-v="com">Go to Communities <span aria-hidden="true">→</span></button></div><div><form class="home-location" data-f="cloc"><label class="visually-hidden" for="home-location">City, county, or ZIP code</label><div class="giant-search"><input id="home-location" name="county" value="${e(S.county)}" placeholder="City, county, or ZIP"><input type="hidden" name="cult" value="${e(S.cult)}"><input type="hidden" name="language" value="${e(S.communityLanguage)}"><input type="hidden" name="category" value="${e(S.communityCategory)}"><button class="round-arrow" type="submit" aria-label="Search communities">→</button></div></form><button class="plain-link" data-a="nav" data-v="circle">Community Circle <span aria-hidden="true">→</span></button></div></article></div></section>
  <section class="ice-band"><div class="container"><div><h2>What to do if immigration agents contact you</h2><p>The ICE information page brings together official agency information and independent rights and legal-help resources.</p></div><button class="ice-button" data-a="nav" data-v="ice">Read ICE information</button></div></section>`;
+}
+function setupHomeEnhancements(){
+ const hero=document.querySelector('.home-hero');
+ if(!hero)return;
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const stageItems=[...document.querySelectorAll('.stage-index-item')];
+ const revealItems=[...document.querySelectorAll('.home-reveal,.language-band,.ice-band')];
+ const hardButtons=[...document.querySelectorAll('[data-hard-task]')];
+ let activeHard=0,hardTimer=0,scrollFrame=0,pointerFrame=0;
+ if(reduced||typeof IntersectionObserver!=='function')return;
+ const headline=hero.querySelector('h1');
+ const prepareHeadline=()=>{
+  if(headline){
+   const lines=[];
+   const textNode=headline.querySelector('.line-mask > span')?.firstChild;
+   const text=textNode?.textContent||'';
+   const wordPattern=/\S+/g;
+   let match;
+   while((match=wordPattern.exec(text))){
+    const range=document.createRange();
+    range.setStart(textNode,match.index);
+    range.setEnd(textNode,match.index+match[0].length);
+    const top=Math.round(range.getBoundingClientRect().top);
+    let line=lines[lines.length-1];
+    if(!line||line.top!==top)lines.push(line={top,words:[]});
+    line.words.push(match[0]);
+   }
+   headline.replaceChildren(...lines.map((line,index)=>{
+    const mask=document.createElement('span'),content=document.createElement('span');
+    mask.className='line-mask';
+    mask.style.setProperty('--line-index',index);
+    content.textContent=line.words.join(' ');
+    mask.append(content);
+    return mask;
+   }));
+  }
+  document.documentElement.classList.add('js-home');
+ };
+ const fontReady=headline&&document.fonts?.load
+  ?document.fonts.load(getComputedStyle(headline).font,headline.textContent)
+  :document.fonts?.ready;
+ if(fontReady)fontReady.then(prepareHeadline);
+ else prepareHeadline();
+ const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
+  if(entry.isIntersecting){entry.target.classList.add('is-visible');revealObserver.unobserve(entry.target)}
+ }),{threshold:.2});
+ revealItems.forEach(item=>revealObserver.observe(item));
+ const heroObserver=new IntersectionObserver(entries=>entries.forEach(entry=>hero.classList.toggle('is-visible',entry.isIntersecting)),{threshold:0});
+ heroObserver.observe(hero);
+ const glowTarget={x:hero.clientWidth*.7,y:hero.clientHeight*.3},glowCurrent={...glowTarget};
+ const updateGlow=()=>{
+  pointerFrame=0;
+  glowCurrent.x+=(glowTarget.x-glowCurrent.x)*.08;
+  glowCurrent.y+=(glowTarget.y-glowCurrent.y)*.08;
+  hero.style.setProperty('--glow-x',`${glowCurrent.x}px`);
+  hero.style.setProperty('--glow-y',`${glowCurrent.y}px`);
+  if(Math.abs(glowTarget.x-glowCurrent.x)>.1||Math.abs(glowTarget.y-glowCurrent.y)>.1)pointerFrame=requestAnimationFrame(updateGlow);
+ };
+ if(matchMedia('(hover:hover) and (pointer:fine)').matches){
+  hero.addEventListener('pointermove',event=>{
+   const bounds=hero.getBoundingClientRect();
+   glowTarget.x=event.clientX-bounds.left;
+   glowTarget.y=event.clientY-bounds.top;
+   if(!pointerFrame)pointerFrame=requestAnimationFrame(updateGlow);
+  },{passive:true});
+ }
+ const index=document.querySelector('.stage-index'),rows=document.querySelector('.stage-rows');
+ const onScroll=()=>{
+  if(scrollFrame)return;
+  scrollFrame=requestAnimationFrame(()=>{
+   scrollFrame=0;
+   const heroBounds=hero.getBoundingClientRect();
+   hero.classList.toggle('scrolled',heroBounds.top<-40);
+   if(heroBounds.bottom>0&&heroBounds.top<innerHeight)hero.style.setProperty('--parallax-y',`${Math.max(-120,Math.min(120,-heroBounds.top*.25))}px`);
+   if(rows&&index){
+    const bounds=rows.getBoundingClientRect();
+    const travel=Math.max(1,bounds.height);
+    index.style.setProperty('--index-progress',`${Math.max(0,Math.min(1,(innerHeight*.55-bounds.top)/travel))}`);
+    const marker=innerHeight*.5;
+    stageItems.forEach(item=>{
+     const rect=item.getBoundingClientRect();
+     item.classList.toggle('is-current',rect.top<=marker&&rect.bottom>=marker);
+    });
+   }
+  });
+ };
+ window.addEventListener('scroll',onScroll,{passive:true});
+ onScroll();
+ const alignPreview=stop=>{
+  const preview=stop.querySelector('.route-preview');
+  if(!preview)return;
+  preview.classList.remove('align-right');
+  if(preview.getBoundingClientRect().right>innerWidth-16)preview.classList.add('align-right');
+ };
+ document.querySelectorAll('.route-stop').forEach(stop=>{
+  const preview=stop.querySelector('.route-preview');
+  stop.addEventListener('pointerenter',()=>{alignPreview(stop);preview?.setAttribute('aria-hidden','false')},{passive:true});
+  stop.addEventListener('pointerleave',()=>preview?.setAttribute('aria-hidden','true'),{passive:true});
+  stop.addEventListener('focus',()=>{alignPreview(stop);preview?.setAttribute('aria-hidden','false')});
+  stop.addEventListener('blur',()=>preview?.setAttribute('aria-hidden','true'));
+ });
+ document.addEventListener('click',event=>{
+  if(event.target.closest('.stage-index-item'))return;
+  document.querySelectorAll('.stage-index-item.is-expanded').forEach(item=>{
+   item.classList.remove('is-expanded');
+   item.querySelector('[data-stage-row]')?.setAttribute('aria-expanded','false');
+  });
+ });
+ stageItems.forEach(item=>item.addEventListener('focusout',event=>{
+  if(!item.contains(event.relatedTarget)){
+   item.classList.remove('is-expanded');
+   item.querySelector('[data-stage-row]')?.setAttribute('aria-expanded','false');
+  }
+ }));
+ if(hardButtons.length){
+  const selectHard=index=>{
+   activeHard=index;
+   hardButtons.forEach((button,i)=>{
+    const selected=i===index,panel=document.querySelector(`[data-hard-panel="${i}"]`);
+    button.classList.toggle('selected',selected);
+    button.setAttribute('aria-pressed',String(selected));
+    if(panel){panel.classList.toggle('selected',selected);panel.inert=!selected;panel.setAttribute('aria-hidden',String(!selected))}
+   });
+  };
+  const stopHardAdvance=()=>{if(hardTimer){clearInterval(hardTimer);hardTimer=0}};
+  const hardSection=document.querySelector('.hard-band');
+  hardSection?.addEventListener('pointerenter',stopHardAdvance,{once:true,passive:true});
+  hardSection?.addEventListener('focusin',stopHardAdvance,{once:true});
+  hardButtons.forEach(button=>{
+   button.addEventListener('pointerenter',stopHardAdvance,{once:true});
+   button.addEventListener('focus',stopHardAdvance,{once:true});
+   button.addEventListener('click',()=>{stopHardAdvance();selectHard(+button.dataset.hardTask)});
+  });
+  hardTimer=window.setInterval(()=>selectHard((activeHard+1)%hardButtons.length),6000);
+ }
 }
 function imm(){
  const group=category=>RES.filter(resource=>resource.s===category).map(resCard).join('');
@@ -361,16 +505,18 @@ function render(){
  document.documentElement.lang=S.lang;
  document.title=titles[S.page]||titles.home;
  document.body.classList.toggle('menu-open',S.menuOpen);
- $('#app').innerHTML=`<a class="skip" href="#main">Skip to content</a><div class="app"><header class="side site-header ${S.menuOpen?'menu-open':''}">
+ $('#app').innerHTML=`<a class="skip" href="#main">Skip to content</a><div class="app"><header class="side site-header ${S.menuOpen?'menu-open':''}"><div class="header-inner">
  <button class="menu-toggle" data-a="menu" aria-expanded="${S.menuOpen}" aria-controls="main-nav"><span class="menu-lines" aria-hidden="true"><span class="menu-line"></span><span class="menu-line"></span><span class="menu-line"></span></span><span>Menu</span></button>
  <button class="brand" data-a="nav" data-v="home" aria-label="Imminent home"><img class="brand-logo" src="assets/imminent-heart-logo.png" alt=""><span class="brand-name">Imminent</span></button>
- <button class="profile-toggle" data-a="nav" data-v="acc" aria-label="${e(navText('acc'))}" lang="${S.lang==='zh'?'zh-Hans':S.lang}">${S.name?'Profile':'Log In'}</button>
+ <button class="profile-toggle" data-a="nav" data-v="acc" aria-label="${e(navText('acc'))}" lang="${S.lang==='zh'?'zh-Hans':S.lang}">${S.name?'Profile':'Log In'}</button></div>
  <nav class="nav ${S.menuOpen?'is-open':''}" id="main-nav" aria-label="Main navigation" aria-hidden="${!S.menuOpen}" ${S.menuOpen?'':'inert'}><div class="nav-inner">
  <div class="nav-primary"><h2>Explore</h2>${primaryNav.map((k,index)=>`<button data-a="nav" data-v="${k}" class="nav-link ${page===k?'on':''}" ${page===k?'aria-current="page"':''} lang="${S.lang==='zh'?'zh-Hans':S.lang}"><span class="nav-number">${String(index+1).padStart(2,'0')}</span><span class="nav-label">${e(navText(k))}</span></button>`).join('')}</div>
  <div class="nav-tools"><div class="nav-group"><p class="nav-group-label">Quick help</p><button class="nav-link" data-a="nav" data-v="ice">${e(navText('ice'))}</button></div><div class="nav-group"><p class="nav-group-label">More</p><button class="nav-link" data-a="nav" data-v="timeline">${e(navText('timeline'))}</button><button class="nav-link" data-a="nav" data-v="circle">${e(navText('circle'))}</button></div><div class="nav-group"><p class="nav-group-label">Account</p><button class="nav-link" data-a="nav" data-v="acc">${S.name?'Profile':'Log In'}</button></div></div>
  <div class="nav-language"><h2>Language</h2>${Object.keys(T).map(k=>`<button data-a="footerLang" data-v="${k}" class="nav-language-option ${S.lang===k?'on':''}" lang="${k==='zh'?'zh-Hans':k}" ${S.lang===k?'aria-current="true"':''}>${T[k].n}</button>`).join('')}</div></div></nav>
  </header>
- <main class="main" id="main" tabindex="-1"><div class="${S.page==='home'?'':'wrap'}"><div class="warn" role="status" data-storage-warning style="${S.storageIssue?'':'display:none'}">${e(S.storageIssue)}</div>${S.lang!=='en'&&t('untr')?`<div class="warn translation-note" lang="${S.lang==='zh'?'zh-Hans':S.lang}">${e(t('untr'))}</div>`:''}${S.toast?`<div class="ok toast" role="status">${e(S.toast)} <button class="btn o s" data-a="x">Dismiss</button></div>`:''}${V[S.page]()}${pageFooter()}</div></main></div>`;
+ <main class="main" id="main" tabindex="-1"><div class="${S.page==='home'?'home-content':'wrap'}"><div class="warn" role="status" data-storage-warning style="${S.storageIssue?'':'display:none'}">${e(S.storageIssue)}</div>${S.lang!=='en'&&t('untr')?`<div class="warn translation-note" lang="${S.lang==='zh'?'zh-Hans':S.lang}">${e(t('untr'))}</div>`:''}${S.toast?`<div class="ok toast" role="status">${e(S.toast)} <button class="btn o s" data-a="x">Dismiss</button></div>`:''}${V[S.page]()}</div>${pageFooter()}</main></div>`;
+ document.documentElement.classList.add('js');
+ if(S.page==='home')setupHomeEnhancements();
  if(S.page==='imm')applyImmigrationFilters();
  if(location.hash)requestAnimationFrame(()=>document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView({block:'start'}));
 }
@@ -398,7 +544,7 @@ if(a==='menu'){S.menuOpen=!S.menuOpen;render();requestAnimationFrame(()=>documen
 else if(a==='pick'){if(+v===-1)S.pick=null;else if(S.pick===null){S.pick=+v;if(S.pick===lesson()[4]){S.ld[lk()]=1;S.done.english=true;save()}}render()}
 else if(a==='say'){if('speechSynthesis'in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(v);u.lang='en-US';u.rate=el.dataset.slow?.6:.9;speechSynthesis.speak(u)}else toast('Audio is not supported in this browser.')}
 else if(a==='save'){S.saved[v]=!S.saved[v];save();render()}else if(a==='compose'){S.compose=!S.compose;S.err='';render()}
-else if(a==='out'){if(!globalThis.confirm('Log out and delete saved data? This will clear your saved journey, notes, resources, lessons, and profile data.'))return;S.demoProfile=false;S.name='';S.pref='English';S.county='';S.goal='settle';S.lv='A1';S.done={};S.ld={};S.saved={};S.journey={};S.customTasks=[];S.compose=false;try{sessionStorage.removeItem('imminent-profile');localStorage.removeItem('imminent');indexedDB.deleteDatabase?.('imminent-community')}catch(err){console.error('Imminent data could not be fully cleared.',err)}toast('Demo profile deleted. Guest mode is active.')}else if(a==='x'){S.toast='';render()}
+else if(a==='out'){if(!globalThis.confirm('Log out and delete saved data? This will clear your saved journey, notes, resources, lessons, and profile data.'))return;S.demoProfile=false;S.name='';S.pref='English';S.county='';S.goal='settle';S.lv='A1';S.done={};S.ld={};S.saved={};S.journey={};S.customTasks=[];S.compose=false;try{sessionStorage.removeItem('imminent-profile');localStorage.removeItem(DEMO_PROFILE_KEY);localStorage.removeItem('imminent');localStorage.removeItem('immily');indexedDB.deleteDatabase?.('imminent-community')}catch(err){console.error('Imminent data could not be fully cleared.',err)}toast('Demo profile deleted. Guest mode is active.')}else if(a==='x'){S.toast='';render()}
 else if(a==='rec'){if(rec&&rec.state==='recording'){rec.stop();return}if(!navigator.mediaDevices||!window.MediaRecorder)return toast('Recording is not supported in this browser.');navigator.mediaDevices.getUserMedia({audio:true}).then(m=>{rec=new MediaRecorder(m);chunks=[];rec.ondataavailable=x=>chunks.push(x.data);rec.onstop=()=>{m.getTracks().forEach(k=>k.stop());S.clip=URL.createObjectURL(new Blob(chunks));render()};rec.start();el.textContent='■ Stop recording'}).catch(()=>toast('Microphone unavailable or permission denied.'))}});
 document.addEventListener('change',ev=>{const el=ev.target,a=el.dataset.a;if(!a)return;
 if(a==='chk'){S.done[el.dataset.v]=el.checked;save();render()}else if(a==='L'){S.lang=el.value;save();render()}else if(a==='cult'){S.cult=el.value;render()}
@@ -415,7 +561,35 @@ else if(f==='post'){const h=(d.h||'').trim(),b=(d.b||'').trim();if(h.length<5||b
 if(PII.test(h+' '+b)){S.err='This looks like it may include private information (such as an email, phone, ID or case number). Please remove it and post again.';return render()}
 const post={id:globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`,createdAt:new Date().toISOString(),a:S.name,l:d.l,t:d.t,h,b};try{await storeForumPost(post);S.posts.unshift(post);S.compose=false;S.err='';S.storageIssue='';toast('Your post was saved in this browser.')}catch(err){console.error('Community post could not be saved.',err);S.storageIssue='Your community post could not be saved. Check browser storage settings and try again.';S.err='The post was not saved. Please try again.';render()}}});
 
-document.addEventListener('click',ev=>{const el=ev.target.closest('[data-a]');if(!el)return;const a=el.dataset.a,id=el.dataset.taskid;if(a==='immCategoryRail'){S.immCategory=el.dataset.v||'all';render()}else if(a==='stageNav'){S.openStage=el.dataset.stageid||'';go('journey',null,'stage-'+S.openStage)}else if(a==='openTask'&&id){S.openTask=id;const task=findTask(id);if(task){const stage=stageForTask(id);S.openStage=stage?.id||''}go('journey',null,'task-'+id)}else if(a==='skipTask'&&id){S.journey[id]={...(S.journey[id]||{}),status:'skipped'};if(S.openTask===id)S.openTask='';save();render()}else if(a==='restoreTask'&&id){S.journey[id]={...(S.journey[id]||{}),status:'not-started'};save();render()}else if(a==='openFinder'){S.rfCategory=el.dataset.category||'All services';S.openTask='';save();go('journey',null,'resource-finder')}else if(a==='scrollTo'){document.getElementById(el.dataset.target)?.scrollIntoView({behavior:'smooth',block:'start'})}});
+document.addEventListener('click',ev=>{
+ const el=ev.target.closest('[data-a]');
+ if(!el)return;
+ const a=el.dataset.a,id=el.dataset.taskid;
+ if(a==='immCategoryRail'){S.immCategory=el.dataset.v||'all';render()}
+ else if(a==='stageNav'){
+  if(ev.detail&&matchMedia('(max-width:1023px)').matches&&el.matches('.route-stop')&&!el.classList.contains('preview-open')){
+   el.classList.add('preview-open');
+   el.querySelector('.route-preview')?.setAttribute('aria-hidden','false');
+   return;
+  }
+  const stageRow=el.matches('[data-stage-row]')?el:el.closest('[data-stage-row]');
+  if(ev.detail&&matchMedia('(max-width:1023px)').matches&&stageRow&&el===stageRow&&!stageRow.closest('.stage-index-item').classList.contains('is-expanded')){
+   document.querySelectorAll('.stage-index-item.is-expanded').forEach(item=>{
+    item.classList.remove('is-expanded');
+    item.querySelector('[data-stage-row]')?.setAttribute('aria-expanded','false');
+   });
+   stageRow.closest('.stage-index-item').classList.add('is-expanded');
+   stageRow.setAttribute('aria-expanded','true');
+   return;
+  }
+  S.openStage=el.dataset.stageid||'';
+  go('journey',null,'stage-'+S.openStage);
+ }else if(a==='openTask'&&id){S.openTask=id;const task=findTask(id);if(task){const stage=stageForTask(id);S.openStage=stage?.id||''}go('journey',null,'task-'+id)}
+ else if(a==='skipTask'&&id){S.journey[id]={...(S.journey[id]||{}),status:'skipped'};if(S.openTask===id)S.openTask='';save();render()}
+ else if(a==='restoreTask'&&id){S.journey[id]={...(S.journey[id]||{}),status:'not-started'};save();render()}
+ else if(a==='openFinder'){S.rfCategory=el.dataset.category||'All services';S.openTask='';save();go('journey',null,'resource-finder')}
+ else if(a==='scrollTo'){document.getElementById(el.dataset.target)?.scrollIntoView({behavior:'smooth',block:'start'})}
+});
 document.addEventListener('change',ev=>{const el=ev.target,a=el.dataset.a,id=el.dataset.taskid;if(a==='taskStatus'&&id){const state=S.journey[id]||{status:'not-started',notes:'',date:''};state.status=el.value;if(el.value==='completed')state.completedAt=new Date().toISOString();S.journey[id]=state;save();S.toast=el.value==='completed'?'Task marked completed':'';render();if(el.value==='completed')requestAnimationFrame(()=>document.querySelector(`[data-taskid="${CSS.escape(id)}"]`)?.focus())}else if(a==='taskDate'&&id){S.journey[id]={...(S.journey[id]||{status:'not-started',notes:''}),date:el.value};save();render()}else if(a==='resource-language'){S.rfLanguage=el.value}else if(a==='resource-category'){S.rfCategory=el.value}});
 document.addEventListener('input',ev=>{const el=ev.target;if(el.dataset.a==='taskNotes'&&el.dataset.taskid){const id=el.dataset.taskid;S.journey[id]={...(S.journey[id]||{status:'not-started',date:''}),notes:el.value};save()}else if(el.id==='resource-county'){S.rfCounty=el.value}});
 document.addEventListener('submit',ev=>{const form=ev.target;if(form.dataset.f==='resourceSearch'){ev.preventDefault();const d=Object.fromEntries(new FormData(form));S.rfCounty=(d.county||'').trim().slice(0,80);S.rfLanguage=d.language||'All languages';S.rfCategory=d.category||'All services';save();render()}else if(form.dataset.f==='personalTask'){ev.preventDefault();const d=Object.fromEntries(new FormData(form)),title=(d.title||'').trim(),notes=(d.notes||'').trim();if(!title)return;const task={id:'personal-'+Date.now().toString(36),title,what:notes||title,why:'A personal reminder can help you focus on a step that matters to you.',how:['Choose one small next action.','Reach out to a trusted local organization if you need support.'],needs:'This depends on your situation. Avoid recording sensitive identity, immigration, or case details.',time:'Your choice',resources:['local'],related:[],custom:true};S.customTasks.unshift(task);S.journey[task.id]={status:'not-started',notes:'',date:''};S.openTask=task.id;save();go('journey')}});

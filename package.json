@@ -1,9 +1,3 @@
 {
-  "private": true,
-  "scripts": {
-    "qa": "node qa/harness.js"
-  },
-  "devDependencies": {
-    "playwright": "^1.55.0"
-  }
+  "private": true
 }
